@@ -1,0 +1,2725 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>【RIDEteam】OWNER'S 広告分析ツール</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='50' fill='%232563eb'/><text x='50' y='54' font-size='46' font-family='Arial,Helvetica,sans-serif' font-weight='bold' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'>R3</text></svg>" />
+<style>
+  :root{
+    --bg:#f3f4f8; --panel:#ffffff; --panel2:#f6f7fb; --line:#e7e8ef;
+    --ink:#1f2433; --sub:#5d6473; --mute:#9aa0b2;
+    --pp:#6c4cf0; --pp2:#5a3fe0; --pp-soft:#efeafe; --pp-soft2:#f5f2ff;
+    --navy:#222b45;
+    --green:#16a34a; --green-bg:#e8f6ec; --green-soft:#eafaf0;
+    --amber:#c2820b; --amber-bg:#fdf4dd;
+    --red:#d83b3f; --red-bg:#fdebeb;
+    --blue:#3b6fe0;
+    --shadow:0 1px 2px rgba(20,24,60,.04),0 2px 8px rgba(20,24,60,.05);
+    --shadow-card:0 1px 3px rgba(20,24,60,.05),0 6px 18px rgba(20,24,60,.06);
+    --r:16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+  body{font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55;}
+
+  /* ===== レイアウト ===== */
+  .app{display:flex;min-height:100vh;}
+  .sidebar{width:248px;flex-shrink:0;background:var(--panel);border-right:1px solid var(--line);
+    position:sticky;top:0;height:100vh;display:flex;flex-direction:column;}
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+
+  /* ロゴ（紫ブロック） */
+  .side-logo{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:20px 22px;} /* 青＝faviconと同色（渡辺=紫・二代目=緑と区別） */
+  .side-logo b{display:block;font-size:21px;font-weight:800;letter-spacing:.6px;}
+  .side-logo span{display:block;font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;}
+
+  /* 縦メニュー */
+  .side-nav{padding:18px 14px;display:flex;flex-direction:column;gap:4px;flex:1;}
+  .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:12px;border:none;
+    background:transparent;color:var(--sub);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    width:100%;text-align:left;transition:all .15s;}
+  .nav-item .ni{width:22px;display:flex;align-items:center;justify-content:center;}
+  .nav-item svg,.kpi-ic svg,.verdict-ic svg,.bell svg,.srcbadge svg,.banner svg{display:block;}
+  .nav-item:hover{background:var(--panel2);color:var(--ink);}
+  .nav-item.active{background:var(--pp-soft);color:var(--pp2);font-weight:800;}
+
+  .side-foot{padding:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px;}
+  .upd-box{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;
+    display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .upd-box .ub-k{font-size:10.5px;color:var(--mute);font-weight:700;}
+  .upd-box .ub-v{font-size:12px;color:var(--ink);font-weight:700;margin-top:2px;}
+  .upd-btn{background:var(--pp-soft);border:none;color:var(--pp2);width:32px;height:32px;border-radius:9px;
+    cursor:pointer;font-size:15px;flex-shrink:0;}
+  .upd-btn:active{transform:scale(.95);}
+  .agency-box{display:flex;align-items:center;gap:10px;padding:6px 4px;}
+  .av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--pp),var(--pp2));
+    color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0;}
+  .agency-box .ab-n{font-size:13px;font-weight:800;color:var(--ink);}
+  .agency-box .ab-s{font-size:11px;color:var(--mute);}
+
+  /* ===== メイン上部バー ===== */
+  .topbar{background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20;
+    display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 26px;}
+  .page-title{font-size:21px;font-weight:800;color:var(--ink);}
+  .tb-right{display:flex;align-items:center;gap:14px;}
+  .srcbadge{font-size:11.5px;font-weight:800;padding:6px 12px;border-radius:999px;white-space:nowrap;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;}
+  .srcbadge.live{background:var(--green-bg);color:#15803d;border-color:#bce7c8;}
+  .srcbadge.partial{background:var(--amber-bg);color:#a96809;border-color:#ecd79a;}
+  .srcbadge.dummy{background:var(--red-bg);color:#c4302b;border-color:#f3c0bd;}
+  .srcdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .srcbadge.live .srcdot{background:#16a34a;}
+  .srcbadge.partial .srcdot{background:#e0a000;}
+  .srcbadge.dummy .srcdot{background:#d83b3f;}
+  .reload{background:var(--pp);border:none;color:#fff;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:800;
+    font-family:inherit;cursor:pointer;white-space:nowrap;box-shadow:0 2px 8px rgba(108,76,240,.3);transition:all .15s;}
+  .reload:hover{background:var(--pp2);}
+  .reload:active{transform:scale(.97);}
+  .reload:disabled{background:var(--mute);box-shadow:none;cursor:not-allowed;opacity:.85;}
+  @media(max-width:520px){.reload{font-size:11px;padding:8px 12px;}}
+  .bell{position:relative;background:var(--panel2);border:1px solid var(--line);width:40px;height:40px;border-radius:12px;
+    cursor:pointer;font-size:17px;color:var(--sub);}
+  .bell .dot{position:absolute;top:8px;right:9px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid #fff;}
+  .who{display:flex;align-items:center;gap:9px;cursor:default;}
+  .who .ab-n{font-size:13px;font-weight:800;color:var(--ink);}
+  .who .av{width:34px;height:34px;}
+
+  .content{padding:22px 26px 90px;max-width:1280px;width:100%;}
+
+  /* ===== 共通 ===== */
+  .banner{margin:0 0 18px;background:var(--amber-bg);border:1px solid #ecd79a;color:#8a5a06;border-radius:14px;
+    padding:13px 16px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;}
+  .banner .bx{background:none;border:none;color:#a96809;font-size:17px;cursor:pointer;}
+  .meta-line{color:var(--mute);font-size:12px;margin:0 0 16px;}
+  .row-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:0 0 18px;}
+  .seg{display:inline-flex;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px;gap:4px;box-shadow:var(--shadow);}
+  .seg button{background:transparent;border:none;color:var(--sub);font-family:inherit;font-size:13px;font-weight:700;
+    padding:8px 20px;border-radius:999px;cursor:pointer;transition:all .15s;}
+  .seg button.active{background:var(--pp);color:#fff;box-shadow:0 2px 8px rgba(108,76,240,.3);}
+  .count{font-size:12.5px;color:var(--mute);margin-left:auto;font-weight:600;}
+  select,input[type=text]{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:inherit;
+    font-size:13px;border-radius:11px;padding:10px 13px;outline:none;box-shadow:var(--shadow);}
+  input[type=text]{width:100%;}
+  select:focus,input:focus{border-color:var(--pp);box-shadow:0 0 0 3px rgba(108,76,240,.12);}
+  .grow{flex:1 1 auto;}
+
+  /* ===== 指定期間（カスタム期間ファネル） ===== */
+  .dz{display:inline-flex;align-items:center;gap:7px;}
+  .dz input[type=date]{background:var(--panel);border:1px solid var(--line);color:var(--ink);font-family:inherit;font-size:13px;border-radius:11px;padding:9px 11px;outline:none;box-shadow:var(--shadow);}
+  .dz input[type=date]:focus{border-color:var(--pp);box-shadow:0 0 0 3px rgba(108,76,240,.12);}
+  .dz-sep{color:var(--mute);font-size:13px;}
+  .dz-go{background:var(--pp);color:#fff;border:none;font-family:inherit;font-size:13px;font-weight:700;padding:9px 18px;border-radius:11px;cursor:pointer;box-shadow:0 2px 8px rgba(108,76,240,.3);}
+  .dz-go:hover{filter:brightness(1.05);}
+  .cohort-note{font-size:11.5px;color:var(--mute);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:0 0 16px;line-height:1.5;}
+  .cohort-note b{color:var(--ink);}
+
+  /* ===== 総合評価 ===== */
+  .verdict{border-radius:20px;padding:22px 24px;margin:0 0 18px;border:1px solid var(--line);background:var(--panel);
+    display:flex;align-items:center;gap:18px;box-shadow:var(--shadow-card);overflow:hidden;position:relative;}
+  .verdict.good{background:linear-gradient(110deg,var(--green-soft),#fff 65%);border-color:#bce7c8;}
+  .verdict.mid{background:linear-gradient(110deg,var(--amber-bg),#fff 65%);border-color:#ecd79a;}
+  .verdict.bad{background:linear-gradient(110deg,var(--red-bg),#fff 65%);border-color:#f3c0bd;}
+  .verdict-ic{width:74px;height:74px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:34px;flex-shrink:0;background:#fff;border:3px solid;}
+  .verdict.good .verdict-ic{border-color:#9adcb0;color:var(--green);}
+  .verdict.mid .verdict-ic{border-color:#e6cd85;color:var(--amber);}
+  .verdict.bad .verdict-ic{border-color:#f0b3af;color:var(--red);}
+  .verdict .lab{font-size:24px;font-weight:800;}
+  .verdict.good .lab{color:#15803d;}
+  .verdict.mid .lab{color:#a96809;}
+  .verdict.bad .lab{color:#c4302b;}
+  .verdict .note{font-size:13px;color:var(--sub);margin-top:5px;}
+
+  /* ===== KPIカード ===== */
+  .cards{display:grid;grid-template-columns:repeat(1,1fr);gap:14px;}
+  @media(min-width:640px){.cards{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:1000px){.cards{grid-template-columns:repeat(3,1fr);}}
+  .kpi{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;
+    box-shadow:var(--shadow-card);display:flex;align-items:flex-start;gap:14px;}
+  .kpi-ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:21px;flex-shrink:0;font-weight:800;}
+  .kpi-ic.tp{background:var(--pp-soft);color:var(--pp2);}
+  .kpi-ic.tg{background:var(--green-bg);color:var(--green);}
+  .kpi-ic.ta{background:var(--amber-bg);color:var(--amber);}
+  .kpi-ic.tr{background:var(--red-bg);color:var(--red);}
+  .kpi-body{min-width:0;flex:1;}
+  .kpi-k{font-size:12.5px;color:var(--sub);font-weight:700;}
+  .kpi-v{font-size:26px;font-weight:800;letter-spacing:.3px;color:var(--ink);margin-top:3px;line-height:1.15;}
+  .kpi-v.sm{font-size:21px;}
+  .kpi-v.j-good{color:var(--green);} .kpi-v.j-ok{color:var(--amber);} .kpi-v.j-bad{color:var(--red);} .kpi-v.j-muted{color:var(--mute);}
+  .kpi-sub{font-size:11.5px;color:var(--mute);margin-top:4px;}
+  .note2{font-size:10.5px;color:#a96809;margin-top:7px;line-height:1.4;}
+  .kbadge{position:absolute;top:16px;right:16px;font-size:11px;font-weight:800;padding:4px 11px;border-radius:999px;border:1px solid transparent;}
+  .kbadge.b-good{background:var(--green-bg);color:#15803d;border-color:#bce7c8;}
+  .kbadge.b-ok{background:var(--amber-bg);color:#a96809;border-color:#ecd79a;}
+  .kbadge.b-bad{background:var(--red-bg);color:#c4302b;border-color:#f3c0bd;}
+
+  /* ===== クリエイティブカード ===== */
+  .cgrid{display:grid;grid-template-columns:1fr;gap:16px;}
+  @media(min-width:640px){.cgrid{grid-template-columns:repeat(2,1fr);}}
+  @media(min-width:1100px){.cgrid{grid-template-columns:repeat(3,1fr);}}
+  .cc{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;
+    flex-direction:column;border-top:3px solid var(--line);box-shadow:var(--shadow-card);}
+  .cc.s-on{border-top-color:#f0c33c;}
+  .cc.s-off{border-top-color:#cdd4dd;}
+  .cc.s-ng{border-top-color:var(--red);}
+  .cc .kv{width:100%;aspect-ratio:1/1;background:var(--panel2);object-fit:cover;display:block;}
+  .cc .kv.ph{display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:12px;}
+  .cc .body{padding:15px;display:flex;flex-direction:column;gap:10px;flex:1;}
+  .ck{font-size:12px;color:var(--blue);word-break:break-all;font-weight:700;font-family:ui-monospace,monospace;}
+  .ck-date{font-size:10px;color:var(--mute);font-weight:700;margin-left:6px;white-space:nowrap;}
+  .ctitle{font-size:14px;font-weight:700;line-height:1.45;color:var(--ink);}
+  .pill{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;padding:4px 11px;border-radius:999px;width:fit-content;border:1px solid transparent;}
+  .pill.on{background:#fdf3d0;color:#876a00;border-color:#efd98c;}
+  .pill.off{background:#eef1f4;color:#5b6675;border-color:#d8dde3;}
+  .pill.ng{background:var(--red-bg);color:#b42318;border-color:#f3c0bd;}
+  .mini{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px;}
+  .mini .m{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px 6px;text-align:center;}
+  .mini .m .mk{font-size:9.5px;color:var(--mute);font-weight:600;}
+  .mini .m .mv{font-size:13.5px;font-weight:800;margin-top:2px;color:var(--ink);}
+  .scoreline{display:flex;gap:8px;font-size:11px;color:var(--sub);background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px 11px;line-height:1.5;}
+  .scoreline .sc-tx{white-space:pre-line;}
+  .scoreline .sc-ic{flex-shrink:0;margin-top:1px;}
+  .scoreline.sc-good .sc-ic{color:var(--green);}
+  .scoreline.sc-mid .sc-ic{color:var(--amber);}
+  .scoreline.sc-bad .sc-ic{color:var(--red);}
+  .ctext{font-size:11.5px;color:var(--mute);line-height:1.5;max-height:3.6em;overflow:hidden;}
+  /* 広告文（メインテキスト）：エリア内だけ縦スクロールで全文表示（カード高さは伸ばさない） */
+  .ctext-body{max-height:6em;overflow-y:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:var(--line) transparent;}
+  .ctext-body::-webkit-scrollbar{width:6px;}
+  .ctext-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
+  .ctext-body::-webkit-scrollbar-track{background:transparent;}
+
+  /* ===== 履歴テーブル（グラフなし） ===== */
+  .hcard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:16px;}
+  .hcard-head{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line);}
+  .hcard-head img,.hcard-head .ph{width:46px;height:46px;border-radius:11px;object-fit:cover;flex-shrink:0;background:var(--panel2);display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:9px;}
+  .hcard-head .hk{font-size:12.5px;color:var(--blue);font-weight:700;font-family:ui-monospace,monospace;word-break:break-all;}
+  .htbl-wrap{overflow-x:auto;}
+  table.htbl{width:100%;border-collapse:collapse;font-size:12.5px;min-width:680px;}
+  table.htbl th,table.htbl td{padding:10px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line);}
+  table.htbl th{background:var(--panel2);color:var(--sub);font-weight:700;font-size:11px;text-align:right;}
+  table.htbl th:first-child,table.htbl td:first-child{text-align:left;}
+  table.htbl tr:last-child td{border-bottom:none;}
+  table.htbl td.num{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;}
+
+  .empty{text-align:center;padding:56px 16px;color:var(--mute);font-size:13px;background:var(--panel);border:1px dashed var(--line);border-radius:var(--r);}
+  .loadwrap{display:flex;align-items:center;justify-content:center;height:100vh;color:var(--sub);}
+  .spin{width:32px;height:32px;border:3px solid var(--line);border-top-color:var(--pp);border-radius:50%;animation:sp 1s linear infinite;margin-right:12px;}
+  @keyframes sp{to{transform:rotate(360deg);}}
+  .sec-title{font-size:13px;font-weight:800;color:var(--sub);margin:6px 2px 10px;}
+
+  /* ===== 単価アイコンのグレー背景（値なし） ===== */
+  .kpi-ic.tn{background:#eef1f4;color:var(--mute);}
+
+  /* ===== 成約プラン内訳（ダッシュボード） ===== */
+  .planrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:3px;}
+  .planrow span{display:inline-flex;align-items:baseline;gap:5px;background:var(--pp-soft);color:var(--pp2);
+    border-radius:10px;padding:5px 10px;font-size:15px;font-weight:800;}
+  .planrow span i{font-style:normal;font-size:10px;color:var(--sub);font-weight:700;}
+
+  /* ===== ファネルカード（クリエイティブ一覧） ===== */
+  .fm-top{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:2px;}
+  .fm-cell{background:var(--panel2);border:1px solid var(--line);border-radius:11px;padding:9px 6px;text-align:center;}
+  .fm-cell span{display:block;font-size:9.5px;color:var(--mute);font-weight:600;}
+  .fm-cell b{font-size:14px;font-weight:800;color:var(--ink);}
+  .fm-cell b.j-good{color:var(--green);} .fm-cell b.j-ok{color:var(--amber);} .fm-cell b.j-bad{color:var(--red);} .fm-cell b.j-muted{color:var(--mute);}
+  .fm-stages{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
+  .fm-stage{display:grid;grid-template-columns:58px 1fr auto;align-items:center;gap:8px;
+    background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:7px 11px;}
+  .fs-k{font-size:11.5px;font-weight:700;color:var(--sub);}
+  .fs-c{font-size:13px;font-weight:800;color:var(--ink);}
+  .fs-p{font-size:11.5px;font-weight:700;text-align:right;}
+  .fs-p.j-good{color:var(--green);} .fs-p.j-ok{color:var(--amber);} .fs-p.j-bad{color:var(--red);} .fs-p.j-muted{color:var(--mute);}
+  .fm-plan{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;}
+  .fm-plan>span{font-size:10.5px;color:var(--mute);font-weight:700;}
+  .fm-plan em{font-style:normal;font-size:11px;font-weight:700;background:var(--pp-soft);color:var(--pp2);border-radius:999px;padding:3px 10px;}
+
+  /* ===== 課題提出進捗 詳細（クリエイティブカード内アコーディオン） ===== */
+  .pd{border:1px solid var(--line);border-radius:11px;overflow:hidden;margin-top:2px;background:var(--panel2);}
+  .pd-head{width:100%;display:flex;align-items:center;gap:7px;padding:9px 11px;background:transparent;border:none;cursor:pointer;font-family:inherit;text-align:left;transition:background .15s;}
+  .pd-head:hover{background:rgba(0,0,0,.03);}
+  .pd-head.open{border-bottom:1px solid var(--line);}
+  .pd-ic{color:var(--pp2);display:flex;flex-shrink:0;}
+  .pd-title{font-size:12px;font-weight:800;color:var(--ink);}
+  .pd-cnt{font-size:11.5px;font-weight:700;color:var(--mute);}
+  .pd-chev{margin-left:auto;color:var(--mute);display:flex;}
+  .pd-body{padding:10px 11px;display:flex;flex-wrap:wrap;gap:6px;max-height:300px;overflow-y:auto;}
+  .pd-empty{font-size:11.5px;color:var(--mute);padding:2px;}
+  .pchip{display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 9px;max-width:100%;}
+  .pname{font-size:11px;font-weight:700;color:var(--ink);max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .pbadge{font-size:10px;font-weight:800;padding:2px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap;}
+  .pbadge.pb-close{background:#e5484d;color:#fff;}        /* 成約：赤背景・白文字 */
+  .pbadge.pb-consult{background:#f5d90a;color:#1a1a1a;}   /* 説明会申込：黄背景・黒文字 */
+  .pbadge.pb-grad{background:#f59e0b;color:#1a1a1a;}      /* 卒業LIVE予約後：オレンジ背景・黒文字 */
+  .pbadge.pb-drop{background:#1a1a1a;color:#fff;}         /* 提出後に脱落：黒背景・白文字 */
+  .pbadge.pb-day{background:#ffe0c2;color:#7a3e00;}       /* 提出済み(継続中)：肌色背景・黒文字 */
+  .pbadge.pb-other{background:#eef1f4;color:#5b6675;}
+
+  /* ===== AI分析（クリエイティブカード内・段階C-1） ===== */
+  .ai-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:2px;
+    background:var(--pp);color:#fff;border:none;border-radius:11px;padding:10px 14px;font-family:inherit;
+    font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 2px 8px rgba(108,76,240,.28);transition:all .15s;}
+  .ai-btn:hover{background:var(--pp2);}
+  .ai-btn:active{transform:scale(.98);}
+  .ai-btn:disabled{background:var(--mute);box-shadow:none;cursor:not-allowed;opacity:.85;}
+  .ai-loading{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--pp2);background:var(--pp-soft2);
+    border:1px solid #e3dbfb;border-radius:11px;padding:11px 13px;margin-top:2px;}
+  .ai-spin{width:16px;height:16px;border:2px solid #d9cffa;border-top-color:var(--pp);border-radius:50%;
+    animation:sp 1s linear infinite;flex-shrink:0;}
+  .ai-err{font-size:12px;color:#c4302b;background:var(--red-bg);border:1px solid #f3c0bd;border-radius:11px;
+    padding:10px 12px;margin-top:2px;line-height:1.5;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+  .ai-err button{background:var(--pp);color:#fff;border:none;border-radius:8px;padding:5px 11px;font-family:inherit;
+    font-size:11px;font-weight:800;cursor:pointer;flex-shrink:0;}
+  .ai-panel{margin-top:2px;background:var(--pp-soft2);border:1px solid #e3dbfb;border-radius:12px;
+    padding:13px 14px;display:flex;flex-direction:column;gap:11px;}
+  .ai-sum{font-size:13px;font-weight:800;color:var(--pp2);line-height:1.5;background:#fff;
+    border:1px solid #e3dbfb;border-radius:10px;padding:10px 12px;}
+  .ai-sec{display:flex;flex-direction:column;gap:5px;}
+  .ai-sec-h{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:var(--pp2);}
+  .ai-sec-h .ai-ic{display:flex;color:var(--pp2);}
+  .ai-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .ai-list li{font-size:12px;color:var(--ink);line-height:1.55;background:#fff;border:1px solid var(--line);
+    border-radius:9px;padding:7px 10px;}
+  .ai-budget{font-size:12px;color:var(--ink);line-height:1.55;background:#fff;border:1px solid var(--line);
+    border-radius:9px;padding:7px 10px;}
+  .ai-props{display:flex;flex-direction:column;gap:6px;}
+  .ai-prop{background:#fff;border:1px solid #e3dbfb;border-left:3px solid var(--pp);border-radius:9px;padding:8px 11px;}
+  .ai-prop .aph{font-size:12.5px;font-weight:800;color:var(--ink);line-height:1.5;}
+  .ai-prop .apr{font-size:11px;color:var(--sub);line-height:1.5;margin-top:4px;}
+  .ai-empty{font-size:11.5px;color:var(--mute);}
+  /* ▼ボタンB（営業分析タブ・上位層AI傾向分析）：確定値の内訳テーブル */
+  .aib-meta{font-size:11px;color:var(--sub);line-height:1.5;}
+  .aib-table{width:100%;border-collapse:separate;border-spacing:0;background:#fff;border:1px solid var(--line);border-radius:9px;overflow:hidden;}
+  .aib-table td{font-size:11.5px;color:var(--ink);line-height:1.5;padding:6px 9px;border-top:1px solid var(--line);vertical-align:top;}
+  .aib-table tr:first-child td{border-top:none;}
+  .aib-table .aib-n{width:52px;text-align:right;font-weight:800;color:var(--pp2);white-space:nowrap;}
+  /* ▼ビルドタグ（サイドバー最下部・デプロイ反映確認用） */
+  .build-tag{font-size:9.5px;color:var(--mute);text-align:center;margin-top:8px;line-height:1.4;}
+
+  /* ====== 課題回答ビューア（段階B） ====== */
+  .agrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;}
+  .acard{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;display:flex;flex-direction:column;text-align:left;padding:0;transition:border-color .15s,box-shadow .15s;}
+  .acard:hover{border-color:var(--blue);box-shadow:0 2px 10px rgba(0,0,0,.06);}
+  .acard:focus-visible{outline:2px solid var(--pp);outline-offset:2px;}
+  .acard .kv{width:100%;aspect-ratio:1/1;background:var(--panel2);object-fit:cover;display:block;}
+  .acard .kv.ph{display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:12px;}
+  .acard .abody{padding:10px 11px;display:flex;flex-direction:column;gap:4px;}
+  .acard .ak{font-size:11px;color:var(--blue);word-break:break-all;font-weight:700;font-family:ui-monospace,monospace;}
+  .acard .atitle{font-size:12px;font-weight:700;line-height:1.4;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .acard .acnt{font-size:12px;color:var(--mute);}
+  .acard .acnt b{color:var(--ink);font-size:14px;}
+  .av-selhead{margin-bottom:12px;}
+  .av-back{display:inline-flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--ink);cursor:pointer;}
+  .av-back:hover{border-color:var(--blue);color:var(--blue);}
+  .av-selcard{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px;margin-bottom:14px;}
+  .av-selcard .kv{width:120px;height:120px;flex:none;border-radius:8px;background:var(--panel2);object-fit:cover;}
+  .av-selcard .kv.ph{display:flex;align-items:center;justify-content:center;color:var(--mute);font-size:11px;}
+  .av-selmeta{display:flex;flex-direction:column;gap:6px;min-width:0;}
+  .av-selmeta .acnt{font-size:12.5px;color:var(--mute);}
+  .aplist{display:flex;flex-direction:column;gap:10px;}
+  .aperson{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:13px 15px;}
+  .aperson.no-ans{opacity:.5;}
+  .ap-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
+  .ap-name{font-size:13.5px;font-weight:800;color:var(--ink);}
+  .ap-noans{font-size:11px;color:var(--mute);}
+  .ap-days{margin-top:10px;display:flex;flex-direction:column;gap:10px;}
+  .aday{display:flex;flex-direction:column;gap:3px;}
+  .aday-k{align-self:flex-start;font-size:11px;font-weight:800;color:#7a3e00;background:#ffe0c2;border-radius:6px;padding:2px 9px;}
+  .aday-v{white-space:pre-wrap;font-size:12.5px;line-height:1.65;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 11px;}
+
+  /* ===== 履歴アコーディオン ===== */
+  .acc{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-card);margin-bottom:12px;overflow:hidden;}
+  .acc-head{width:100%;display:flex;align-items:center;gap:12px;padding:15px 18px;background:transparent;border:none;cursor:pointer;font-family:inherit;text-align:left;transition:background .15s;}
+  .acc-head:hover{background:var(--panel2);}
+  .acc-head.open{border-bottom:1px solid var(--line);}
+  .acc-ic{color:var(--pp2);display:flex;flex-shrink:0;}
+  .acc-title{font-size:14.5px;font-weight:800;color:var(--ink);}
+  .acc-sub{font-size:12px;color:var(--mute);font-weight:600;}
+  .acc-chev{margin-left:auto;color:var(--mute);display:flex;}
+  .htbl td.hkcell{color:var(--blue);font-weight:700;font-family:ui-monospace,monospace;font-size:11.5px;}
+  .hkflex{display:flex;align-items:center;gap:9px;}
+  .thumb{border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--line);}
+  .thumb.ph{display:flex;align-items:center;justify-content:center;background:var(--panel2);color:var(--mute);font-size:10px;}
+  table.htbl td.j-good{color:var(--green);} table.htbl td.j-ok{color:var(--amber);} table.htbl td.j-bad{color:var(--red);} table.htbl td.j-muted{color:var(--mute);}
+  table.htbl{min-width:1560px;}
+  table.htbl td .pill{font-size:10px;padding:3px 8px;}
+
+  /* ===== 営業分析 ===== */
+  .sales-summary{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 18px;}
+  .staff-chip{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:11px 14px;box-shadow:var(--shadow);}
+  .staff-chip .sc-name{font-size:13px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:6px;}
+  .staff-chip .sc-name svg{color:var(--pp2);}
+  .staff-chip .sc-stats{display:flex;flex-wrap:wrap;gap:5px 10px;margin-top:6px;font-size:11.5px;}
+  .staff-chip .sc-stats em{font-style:normal;font-weight:700;color:var(--sub);}
+  .staff-chip .sc-stats em.j-good{color:var(--green);} .staff-chip .sc-stats em.j-ok{color:var(--amber);}
+  .staff-chip .sc-stats em.j-bad{color:var(--red);} .staff-chip .sc-stats em.j-muted{color:var(--mute);}
+  /* ▼顧客明細テーブル（v34：クリエイティブ別カード内・担当者別の内訳で使用。折りたたみ式・デフォルト閉） */
+  .sc-dt{margin-top:7px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2);}
+  .sc-dt-head{width:100%;display:flex;align-items:center;gap:6px;padding:7px 10px;background:transparent;border:none;cursor:pointer;
+    font-family:inherit;text-align:left;font-size:11.5px;font-weight:800;color:var(--sub);transition:background .15s;}
+  .sc-dt-head:hover{background:rgba(0,0,0,.03);}
+  .sc-dt-head svg{color:var(--pp2);flex-shrink:0;}
+  .sc-dt-head .cnt{font-weight:700;color:var(--mute);}
+  .sc-dt-head .chev{margin-left:auto;display:flex;color:var(--mute);}
+  .sc-dt-body{max-height:260px;overflow-y:auto;border-top:1px solid var(--line);background:var(--panel);}
+  .sc-dt table{width:100%;border-collapse:collapse;font-size:11.5px;}
+  .sc-dt td{padding:5px 10px;border-top:1px solid var(--line);color:var(--ink);vertical-align:middle;}
+  .sc-dt tr:first-child td{border-top:none;}
+  .sc-dt td.dt-name{font-weight:700;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sc-dt td.dt-amt{text-align:right;font-weight:700;white-space:nowrap;color:var(--sub);}
+  .dt-badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:10.5px;font-weight:800;border:1px solid transparent;white-space:nowrap;}
+  .dt-badge.b-close{background:var(--green-bg);color:#15803d;border-color:#bce7c8;}
+  .dt-badge.b-pending{background:var(--amber-bg);color:#a96809;border-color:#ecd79a;}
+  .dt-badge.b-lose{background:var(--red-bg);color:#b02a2e;border-color:#f2c6c7;}
+  .dt-badge.b-nothd{background:var(--panel2);color:var(--mute);border-color:#d8dde3;border-style:dashed;}
+  .sales-note{font-size:11.5px;color:var(--sub);background:var(--amber-bg);border:1px solid #ecd79a;border-radius:11px;
+    padding:9px 12px;margin:0 0 18px;display:flex;align-items:center;gap:7px;line-height:1.45;}
+  .sales-note svg{color:#a96809;flex-shrink:0;}
+
+  /* 営業カード：成約／検討中／不成約 */
+  .sc-states{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:2px;}
+  .sc-state{border-radius:11px;padding:9px 4px;text-align:center;border:1px solid transparent;}
+  .sc-state .ssk{font-size:9.5px;font-weight:700;}
+  .sc-state .ssv{font-size:17px;font-weight:800;margin-top:2px;}
+  .sc-state.st-close{background:var(--green-bg);border-color:#bce7c8;}
+  .sc-state.st-close .ssk,.sc-state.st-close .ssv{color:#15803d;}
+  .sc-state.st-pending{background:#fdf4dd;border-color:#ecd79a;}
+  .sc-state.st-pending .ssk,.sc-state.st-pending .ssv{color:#a96809;}
+  .sc-state.st-lose{background:#eef1f4;border-color:#d8dde3;}
+  .sc-state.st-lose .ssk,.sc-state.st-lose .ssv{color:#5b6675;}
+  /* 未開催：結果未確定が分かるよう、薄い背景＋点線枠＋淡色 */
+  .sc-state.st-nothd{background:var(--panel2);border-style:dashed;border-color:#d8dde3;}
+  .sc-state.st-nothd .ssk,.sc-state.st-nothd .ssv{color:var(--mute);}
+
+  /* 営業カード：担当者別内訳（アコーディオン内） */
+  .staff-list{display:flex;flex-direction:column;gap:6px;width:100%;}
+  .staff-row{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;}
+  .staff-row .sr-top{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  .staff-row .sr-name{font-size:12px;font-weight:800;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .staff-row .sr-rate{font-size:11px;font-weight:800;white-space:nowrap;flex-shrink:0;}
+  .staff-row .sr-rate.j-good{color:var(--green);} .staff-row .sr-rate.j-ok{color:var(--amber);}
+  .staff-row .sr-rate.j-bad{color:var(--red);} .staff-row .sr-rate.j-muted{color:var(--mute);}
+  .staff-row .sr-stats{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:5px;font-size:10.5px;color:var(--sub);}
+  .staff-row .sr-stats em{font-style:normal;font-weight:700;}
+  .staff-row .sr-stats em.j-muted{color:var(--mute);}
+
+  /* ===== 広告ID検索（クリエイティブ一覧・営業分析・課題回答 共通） ===== */
+  .adq{position:relative;max-width:380px;flex:1 1 240px;margin:0 0 14px;}
+  .adq input{padding-left:36px;padding-right:36px;}
+  .adq .adq-ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mute);display:flex;pointer-events:none;}
+  .adq-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--panel2);border:1px solid var(--line);
+    color:var(--sub);width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:13px;line-height:1;
+    display:flex;align-items:center;justify-content:center;padding:0;}
+  .adq-clear:hover{color:var(--ink);border-color:var(--pp);}
+
+  /* ===== テスト予定タブ ===== */
+  .tp-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 14px;}
+  .tp-add{background:var(--pp);color:#fff;border:none;border-radius:12px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:13px;}
+  .tp-add:hover{background:var(--pp2);}
+  .tp-toggle{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--sub);cursor:pointer;user-select:none;}
+  .tp-msg{font-size:12px;font-weight:700;color:var(--sub);}
+  .tp-msg.ok{color:var(--green);} .tp-msg.err{color:var(--red);}
+  .tp-list{display:flex;flex-direction:column;gap:10px;}
+  .tp-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;}
+  .tp-card.dragging{opacity:.45;}
+  .tp-card.dragover{outline:2px dashed var(--pp);outline-offset:2px;}
+  .tp-grip{cursor:grab;color:var(--mute);font-size:16px;line-height:1;padding:4px 2px;flex-shrink:0;user-select:none;}
+  .tp-body{flex:1;min-width:0;}
+  .tp-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .tp-badge{font-size:10.5px;font-weight:800;padding:3px 9px;border-radius:999px;white-space:nowrap;}
+  .tp-badge.st-todo{background:var(--amber-bg);color:var(--amber);}
+  .tp-badge.st-doing{background:var(--green-bg);color:var(--green);}
+  .tp-badge.st-done{background:var(--pp-soft);color:var(--pp2);}
+  .tp-badge.st-skip{background:var(--panel2);color:var(--mute);}
+  .tp-title{font-size:14px;font-weight:800;color:var(--ink);}
+  .tp-meta{font-size:11px;color:var(--sub);display:flex;gap:10px;flex-wrap:wrap;margin-top:2px;}
+  .tp-hypo{font-size:12px;color:var(--sub);margin-top:6px;cursor:pointer;white-space:pre-wrap;word-break:break-word;}
+  .tp-hypo:hover{color:var(--ink);}
+  .tp-actions{display:flex;gap:6px;flex-shrink:0;}
+  .tp-btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:11.5px;color:var(--sub);cursor:pointer;font-weight:700;white-space:nowrap;}
+  .tp-btn:hover{color:var(--ink);border-color:var(--pp);}
+  .tp-btn.danger:hover{color:var(--red);border-color:var(--red);}
+  .tp-overlay{position:fixed;inset:0;background:rgba(20,24,60,.45);z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .tp-modal{background:var(--panel);border-radius:var(--r);box-shadow:var(--shadow-card);width:min(560px,100%);max-height:90vh;overflow-y:auto;padding:20px 22px;}
+  .tp-modal h3{font-size:15px;margin:0 0 14px;color:var(--ink);}
+  .tp-form{display:flex;flex-direction:column;gap:10px;}
+  .tp-field label{display:block;font-size:11px;font-weight:800;color:var(--sub);margin-bottom:4px;}
+  .tp-field input,.tp-field select,.tp-field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px;color:var(--ink);background:var(--panel);font-family:inherit;}
+  .tp-field textarea{min-height:72px;resize:vertical;}
+  .tp-field input:focus,.tp-field select:focus,.tp-field textarea:focus{outline:none;border-color:var(--pp);}
+  .tp-req{color:var(--red);}
+  .tp-modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+  .tp-cancel{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 16px;font-size:13px;color:var(--sub);cursor:pointer;font-weight:700;}
+  .tp-save{background:var(--pp);border:none;border-radius:10px;padding:9px 18px;font-size:13px;color:#fff;cursor:pointer;font-weight:800;}
+  .tp-save:disabled{opacity:.5;cursor:default;}
+  .tp-form-err{font-size:12px;color:var(--red);font-weight:700;}
+
+  /* ===== タグ機能（クリエイティブ一覧） ===== */
+  .tagrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0 2px;}
+  .tagchip{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap;}
+  .tagchip-x{background:none;border:none;cursor:pointer;font-size:12px;line-height:1;padding:0 0 0 2px;opacity:.7;}
+  .tagchip-x:hover{opacity:1;}
+  .tagadd-wrap{position:relative;display:inline-flex;}
+  .tagadd-btn{background:var(--panel2);border:1px dashed var(--line);border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:800;color:var(--sub);cursor:pointer;}
+  .tagadd-btn:hover{color:var(--pp);border-color:var(--pp);}
+  .tagpop-veil{position:fixed;inset:0;z-index:49;}
+  .tagpop{position:absolute;left:0;top:calc(100% + 6px);z-index:50;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-card);padding:10px;width:230px;display:flex;flex-direction:column;gap:8px;}
+  .tagpop input{width:100%;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12px;color:var(--ink);background:var(--panel);font-family:inherit;}
+  .tagpop input:focus{outline:none;border-color:var(--pp);}
+  .tagpop-new{background:var(--pp-soft);border:none;border-radius:8px;padding:7px 8px;font-size:11.5px;font-weight:800;color:var(--pp2);cursor:pointer;text-align:left;}
+  .tagpop-new:hover{background:var(--pp);color:#fff;}
+  .tagpop-list{display:flex;flex-direction:column;gap:2px;max-height:180px;overflow-y:auto;}
+  .tagpop-item{display:flex;align-items:center;gap:7px;background:none;border:none;border-radius:8px;padding:6px 8px;font-size:12px;color:var(--ink);cursor:pointer;text-align:left;}
+  .tagpop-item:hover{background:var(--panel2);}
+  .tagpop-item i{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .tagpop-empty{font-size:11px;color:var(--mute);}
+  .tagpop-note{font-size:10px;color:var(--mute);line-height:1.5;border-top:1px solid var(--line);padding-top:6px;}
+  .tagbar-wrap{display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap;}
+  .tagbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 14px;padding-top:6px;}
+  .tagbar-label{font-size:11px;font-weight:800;color:var(--sub);}
+  .tagbar-note{font-size:11px;color:var(--mute);display:inline-flex;align-items:center;}
+  .tagf-btn{display:inline-flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;color:var(--sub);cursor:pointer;}
+  .tagf-btn i{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+  .tagf-btn:hover{border-color:var(--pp);color:var(--ink);}
+  .tagf-btn.on{box-shadow:0 0 0 1px currentColor inset;}
+  .tagf-clear{background:none;border:none;font-size:11px;font-weight:800;color:var(--pp2);cursor:pointer;text-decoration:underline;padding:4px 2px;}
+  .tagf-manage{background:var(--panel2);border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:11px;font-weight:800;color:var(--sub);cursor:pointer;}
+  .tagf-manage:hover{color:var(--ink);border-color:var(--pp);}
+  .tg-list{display:flex;flex-direction:column;gap:8px;}
+  .tg-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;}
+  .tg-count{font-size:11px;color:var(--sub);font-weight:700;flex:1;}
+  .tg-input{flex:1;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:12.5px;color:var(--ink);background:var(--panel);font-family:inherit;}
+  .tg-input:focus{outline:none;border-color:var(--pp);}
+  .tg-actions{display:flex;gap:6px;margin-left:auto;}
+  .tg-none{font-size:12px;color:var(--sub);}
+
+  /* ===== レスポンシブ（スマホ：サイドバー→上部） ===== */
+  @media(max-width:860px){
+    .app{flex-direction:column;}
+    .sidebar{width:100%;height:auto;position:sticky;top:0;border-right:none;border-bottom:1px solid var(--line);z-index:30;}
+    .side-logo{padding:14px 18px;}
+    .side-logo b{font-size:18px;}
+    .side-nav{flex-direction:row;overflow-x:auto;padding:10px 12px;gap:6px;scrollbar-width:none;}
+    .side-nav::-webkit-scrollbar{display:none;}
+    .nav-item{width:auto;flex:0 0 auto;padding:9px 14px;}
+    .nav-item .ni{display:none;}
+    .side-foot{display:none;}
+    .topbar{padding:14px 16px;}
+    .page-title{font-size:18px;}
+    .who .ab-n{display:none;}
+    .content{padding:18px 16px 90px;}
+    .srcbadge{font-size:10.5px;padding:5px 10px;}
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="./vendor/react.production.min.js"></script>
+<script src="./vendor/react-dom.production.min.js"></script>
+<script src="./vendor/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* ============================================================
+   Lucide アイコン（ISCライセンス／インラインSVG・外部CDN非依存）
+   stroke-width 1.75 で全体統一。色は currentColor。
+============================================================ */
+const ICONS = {
+  "layout-dashboard":'<rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>',
+  "images":'<path d="M18 22H4a2 2 0 0 1-2-2V6"/><path d="m22 13-1.296-1.296a2.41 2.41 0 0 0-3.408 0L11 18"/><circle cx="12" cy="8" r="2"/><rect width="16" height="16" x="6" y="2" rx="2"/>',
+  "line-chart":'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/>',
+  "search":'<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+  "bell":'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>',
+  "flame":'<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>',
+  "japanese-yen":'<path d="M12 9.5V21m0-11.5L6 3m6 6.5L18 3"/><path d="M6 15h12"/><path d="M6 11h12"/>',
+  "user-plus":'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" x2="19" y1="8" y2="14"/><line x1="22" x2="16" y1="11" y2="11"/>',
+  "target":'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+  "file-text":'<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/>',
+  "flag":'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" x2="4" y1="22" y2="15"/>',
+  "calendar-check":'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  "handshake":'<path d="m11 17 2 2a1 1 0 1 0 3-3"/><path d="m14 14 2.5 2.5a1 1 0 1 0 3-3l-3.88-3.88a3 3 0 0 0-4.24 0l-.88.88a1 1 0 1 1-3-3l2.81-2.81a5.79 5.79 0 0 1 7.06-.87l.47.28a2 2 0 0 0 1.42.25L21 4"/><path d="m21 3 1 11h-2"/><path d="M3 3 2 14l6.5 6.5a1 1 0 1 0 3-3"/><path d="M3 4h8"/>',
+  "wallet":'<path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>',
+  "trending-up":'<polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/>',
+  "triangle-alert":'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
+  "chevron-down":'<path d="m6 9 6 6 6-6"/>',
+  "chevron-up":'<path d="m18 15-6-6-6 6"/>',
+  "book-open":'<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>',
+  "users":'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+  "percent":'<line x1="19" x2="5" y1="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>',
+  "calendar-range":'<rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M3 10h18"/><path d="M8 2v4"/><path d="M17 14h-6"/><path d="M13 18H7"/><path d="M7 14h.01"/><path d="M17 18h.01"/>',
+  "sparkles":'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/>',
+};
+function Icon({name, size, sw, className, style}){
+  const body = ICONS[name];
+  if(!body) return null;
+  return (
+    <svg className={className} style={style} width={size||20} height={size||20}
+      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw||1.75}
+      strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+      dangerouslySetInnerHTML={{__html: body}} />
+  );
+}
+
+/* ============================================================
+   設定：唯一のデータ源（OWNER'S 広告分析 JSON API）
+============================================================ */
+const API = "https://script.google.com/macros/s/AKfycbwvL-eH0ralsyEXEXTq_QGlANrxjjm0OROzUESnueXh7yrDOQhdr-CHlj2q6AKH3NJ1Bw/exec"; // RIDE三代目GASのデプロイURL（2026-10-02 初回デプロイ）
+const URL_SUMMARY = API + "?type=summary";
+const URL_HISTORY = API + "?type=history";
+const URL_RUN     = API + "?type=run"; // updateAll() を手動実行
+const URL_SALES   = API + "?type=sales"; // 営業分析データ
+const URL_ANSWERS = API + "?type=answers"; // 課題回答（クリエイティブ別・遅延取得）
+const URL_TESTPLAN = API + "?type=testplan"; // テスト予定（一覧）
+const URL_TAGS    = API + "?type=tags"; // タグ管理（クリエイティブ×タグの紐づけ一覧・遅延取得）
+const URL_ADFUNNEL = API + "?type=adfunnel"; // 広告別3段ファネル（クリエイティブ一覧カードの「LINE追加」行・遅延取得）
+
+// ▼ビルドタグ：いま開いているページがどの版かを即判別するための表示（サイドバー最下部＋起動時コンソール）。
+//   デプロイ反映確認用。ボタンBが見えない等の際は、まずこの表記が最新かを確認する（古ければキャッシュか別ページ）。
+const BUILD_TAG = "build 2026-10-01 / 2026-09-24〜";
+console.log("%c[OWNER'S] " + BUILD_TAG, "color:#6c4cf0;font-weight:bold");
+
+/* ============================================================
+   ダミーデータ（取得失敗時のフォールバック）
+============================================================ */
+const DUMMY_SUMMARY = {
+  ok:true, agency:"RIDEチーム", generatedAt:"2026-06-25T15:00:00+09:00",
+  targets:{cpa:{goal:3000,limit:5000},day1:{goal:15000,limit:25000},finish:{goal:30000,limit:50000},consult:{goal:60000,limit:100000},close:{goal:120000,limit:300000}},
+  planPrice:{Light:490000,Premium:680000,Black:980000},
+  lastUpdated:{daily:"2026-06-25 14:46",weekly:"2026-06-25 14:46",cumulative:"2026-06-25 14:46"},
+  daily:[
+    {period:"2026-06-25〜2026-06-25",status:"配信中",spend:1409,opt:1,cpa:1409,cpaJudge:"✅ 達成",day1:0,finish:0,consult:0,close:0,revenue:0,roas:0,adKey:"lp02-cp2-non-056-31-20",image:""},
+    {period:"2026-06-25〜2026-06-25",status:"配信中",spend:1787,opt:2,cpa:894,cpaJudge:"✅ 達成",day1:1,finish:0,consult:0,close:0,revenue:0,roas:0,adKey:"lp05-cp6-pet-w067-f23-32",image:""},
+  ],
+  weekly:[
+    {period:"2026-06-18〜2026-06-24",status:"配信中",score:"🔥 好調（9/10）",spend:20564,opt:6,cpa:3427,cpaJudge:"⚠️ 許容",day1:3,day1Cpa:6855,finish:0,consult:0,close:0,revenue:0,roas:0,adKey:"lp02-cp2-non-056-31-20",image:""},
+  ],
+  cumulative:[
+    {period:"2025-06-06〜2026-06-24",status:"",score:"🔥 好調（15/15）",spend:120000,opt:60,cpa:2000,cpaJudge:"✅ 達成",day1:8,day1Cpa:15000,finish:4,finishCpa:30000,consult:2,close:1,revenue:430000,roas:3.58,adKey:"lp05-cp6-pet-w067-f23-32",image:""},
+    {period:"2025-06-06〜2026-06-24",status:"",score:"⚠️ 不調（1/15）",spend:48000,opt:8,cpa:6000,cpaJudge:"🚨 限界超過",day1:0,finish:0,consult:0,close:0,revenue:0,roas:0,adKey:"lp02-cp2-non-056-31-20",image:""},
+  ],
+  creatives:[
+    {adKey:"lp05-cp6-pet-w067-f23-32",startDate:"2025-09-03 00:00:00",status:"配信中",title:"ペット好き必見の在宅ワーク",body:"スキマ時間で始められる新しい働き方。未経験から月収UPを目指せます。",target:"",note:"",image:""},
+    {adKey:"lp02-cp2-non-056-31-20",startDate:"2025-08-12 00:00:00",status:"停止中",title:"忙しいママにピッタリのおうちワーク",body:"子育てと両立できる在宅ワーク。スキマ時間から安心して始められます。",target:"",note:"",image:""},
+    {adKey:"lp02-cp2-mamawork-050-35a",startDate:"2025-09-03 00:00:00",status:"配信不可（要確認）",title:"パート以上の収入をおうちで",body:"特別なスキル不要。スマホ1台で始められる無在庫アパレル物販。",target:"",note:"",image:""},
+  ],
+};
+const DUMMY_HISTORY = {
+  ok:true, agency:"RIDEチーム", historyLastUpdated:"2026-06-25 14:46",
+  history:[
+    {period:"2026-06-18〜2026-06-24",status:"配信中",score:"🔥 好調",spend:20564,opt:6,cpa:3427,day1:3,finish:0,consult:0,close:0,revenue:0,roas:0,adKey:"lp02-cp2-non-056-31-20",image:""},
+    {period:"2026-06-18〜2026-06-24",status:"配信中",score:"🔥 好調",spend:25915,opt:9,cpa:2879,day1:4,finish:2,consult:1,close:0,revenue:0,roas:0,adKey:"lp05-cp6-pet-w067-f23-32",image:""},
+  ],
+};
+// 営業データのダミー（取得失敗時のフォールバック。不明1件を含む6件）
+const DUMMY_SALES = {
+  ok:true,
+  sales:{
+    byStaff:[
+      {staff:"横本恭子", applied:17, close:5, pending:2, lose:3, notHeld:7, rate:63, rateNum:"5/8", revenue:2450000},
+      {staff:"田中亮",   applied:11, close:3, pending:1, lose:4, notHeld:3, rate:43, rateNum:"3/7", revenue:1470000},
+      {staff:"佐藤美咲", applied:6,  close:1, pending:0, lose:5, notHeld:0, rate:17, rateNum:"1/6", revenue:490000},
+    ],
+    byCreative:[
+      {adKey:"lp05-cp6-pet-w067-f23-32", applied:9, close:3, pending:1, lose:2, notHeld:3, rate:60, rateNum:"3/5", revenue:1470000,
+        byStaff:[
+          {staff:"横本恭子", applied:6, close:2, pending:1, lose:1, notHeld:2, rate:67, rateNum:"2/3", revenue:980000},
+          {staff:"田中亮",   applied:3, close:1, pending:0, lose:1, notHeld:1, rate:50, rateNum:"1/2", revenue:490000},
+        ]},
+      {adKey:"lp02-cp2-non-056-31-20", applied:7, close:2, pending:1, lose:1, notHeld:3, rate:67, rateNum:"2/3", revenue:980000,
+        byStaff:[
+          {staff:"横本恭子", applied:4, close:1, pending:1, lose:0, notHeld:2, rate:100, rateNum:"1/1", revenue:490000},
+          {staff:"佐藤美咲", applied:3, close:1, pending:0, lose:1, notHeld:1, rate:50, rateNum:"1/2", revenue:490000},
+        ]},
+      {adKey:"lp02-cp2-mamawork-050-35a", applied:5, close:1, pending:0, lose:4, notHeld:0, rate:20, rateNum:"1/5", revenue:490000,
+        byStaff:[
+          {staff:"田中亮", applied:5, close:1, pending:0, lose:4, notHeld:0, rate:20, rateNum:"1/5", revenue:490000},
+        ]},
+      {adKey:"lp07-cp3-side-021-44b", applied:4, close:2, pending:0, lose:1, notHeld:1, rate:67, rateNum:"2/3", revenue:980000,
+        byStaff:[
+          {staff:"横本恭子", applied:4, close:2, pending:0, lose:1, notHeld:1, rate:67, rateNum:"2/3", revenue:980000},
+        ]},
+      {adKey:"lp03-cp1-free-088-12c", applied:3, close:0, pending:1, lose:2, notHeld:0, rate:null, rateNum:"0/2", revenue:0,
+        byStaff:[
+          {staff:"佐藤美咲", applied:3, close:0, pending:1, lose:2, notHeld:0, rate:null, rateNum:"0/2", revenue:0},
+        ]},
+      {adKey:"広告キー不明", applied:14, close:3, pending:2, lose:9, notHeld:0, rate:25, rateNum:"3/12", revenue:1470000, byStaff:[]},
+    ],
+    unknownCount:14,
+  },
+};
+
+/* ============================================================
+   JSONP 取得（GASはCORS非対応のため <script> で取得）
+============================================================ */
+let _jsonpSeq = 0;
+function jsonp(url, ms){
+  return new Promise((resolve, reject)=>{
+    const cb = "__owners_jsonp_" + (++_jsonpSeq);
+    const sep = url.indexOf("?") >= 0 ? "&" : "?";
+    const script = document.createElement("script");
+    let done = false;
+    const cleanup = ()=>{
+      try{ delete window[cb]; }catch(e){ window[cb] = undefined; }
+      if(script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(()=>{
+      if(done) return; done = true; cleanup();
+      reject(new Error("タイムアウト（JSONP応答なし）"));
+    }, ms || 28000);
+    window[cb] = (data)=>{ if(done) return; done = true; cleanup(); resolve(data); };
+    script.onerror = ()=>{ if(done) return; done = true; cleanup(); reject(new Error("スクリプト読み込みエラー")); };
+    script.src = url + sep + "callback=" + cb;
+    document.head.appendChild(script);
+  });
+}
+// summaryは約480KB/10秒かかるためリトライ付き
+async function jsonpRetry(url, tries, ms){
+  let last;
+  for(let i=0;i<(tries||1);i++){
+    try{ return await jsonp(url, ms); }catch(e){ last=e; }
+  }
+  throw last;
+}
+
+/* ============================================================
+   テスト予定：書き込み送信
+   fetch POST（Content-Type: text/plain;charset=utf-8 ＝単純リクエスト→CORSプリフライト無し）。
+   GAS側は doPost の e.postData.contents で受信。
+   POSTが通らない環境ではJSONP GET（?type=testplanwrite&payload=...）へ自動フォールバック。
+============================================================ */
+async function postTestPlanWrite(body){
+  try{
+    const res = await fetch(API, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return await res.json();
+  }catch(e){
+    console.warn("[OWNER'S] testplan POST失敗→JSONPフォールバック:", e.message);
+    return await jsonp(API + "?type=testplanwrite&payload=" + encodeURIComponent(JSON.stringify(body)) + "&_=" + Date.now(), 28000);
+  }
+}
+
+/* ============================================================
+   タグ管理：書き込み送信（テスト予定と同方式）
+   fetch POST（text/plain＝単純リクエスト）→ 失敗時はJSONP GET
+   （?type=tagwrite&payload=...）へ自動フォールバック。
+============================================================ */
+async function postTagWrite(body){
+  try{
+    const res = await fetch(API, { method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body: JSON.stringify(body) });
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    return await res.json();
+  }catch(e){
+    console.warn("[OWNER'S] tag POST失敗→JSONPフォールバック:", e.message);
+    return await jsonp(API + "?type=tagwrite&payload=" + encodeURIComponent(JSON.stringify(body)) + "&_=" + Date.now(), 28000);
+  }
+}
+
+/* ============================================================
+   整形ユーティリティ
+============================================================ */
+const isNum = (v)=> v!=="" && v!=null && !isNaN(Number(v));
+const N = (v)=> isNum(v) ? Number(v) : null;
+const comma = (v)=> isNum(v) ? Math.round(Number(v)).toLocaleString("ja-JP") : "-";
+const yen = (v)=> isNum(v) ? "¥"+Math.round(Number(v)).toLocaleString("ja-JP") : "-";
+const yen0 = (v)=> isNum(v) ? "¥"+Math.round(Number(v)).toLocaleString("ja-JP") : "¥0";
+const roasFmt = (v)=> isNum(v) ? (Math.round(Number(v)*100)/100).toLocaleString("ja-JP")+"x" : "-";
+const pctFmt = (v)=> isNum(v) ? (Math.round(Number(v)*1000)/10)+"%" : "-";
+
+function costClass(v, t){
+  if(!isNum(v) || !t) return "";
+  v=Number(v);
+  if(v<=t.goal) return "j-good";
+  if(v<=t.limit) return "j-ok";
+  return "j-bad";
+}
+function ratingFromText(s){
+  s = String(s||"");
+  if(s.indexOf("🔥")>=0 || s.indexOf("好調")>=0) return {emo:"🔥", lab:"好調", cls:"good"};
+  if(s.indexOf("⚠️")>=0 || s.indexOf("不調")>=0) return {emo:"⚠️", lab:"不調", cls:"bad"};
+  if(s.indexOf("➡️")>=0 || s.indexOf("普通")>=0) return {emo:"➡️", lab:"普通", cls:"mid"};
+  return null;
+}
+// バックエンド由来スコア文字列の絵文字を線画トーンの記号に統一
+function formatScore(s){
+  return String(s||"")
+    .replace(/🔥/g,"").replace(/➡️/g,"").replace(/⚠️/g,"△")
+    .replace(/✅/g,"◎").replace(/🚨/g,"✕")
+    .replace(/^[\s　]*[△◎✕]?\s*/, m=> /[△◎✕]/.test(m)? m.trim()+" " : "")
+    .trim();
+}
+function scoreIcon(cls){ return cls==="bad"?"triangle-alert":cls==="mid"?"trending-up":"flame"; }
+function statusInfo(st){
+  st = String(st||"");
+  if(st.indexOf("配信不可")>=0 || st.indexOf("不可")>=0) return {cls:"ng", card:"s-ng", label:st||"配信不可"};
+  if(st.indexOf("停止")>=0) return {cls:"off", card:"s-off", label:st||"停止中"};
+  if(st.indexOf("配信中")>=0) return {cls:"on", card:"s-on", label:"配信中"};
+  return {cls:"off", card:"s-off", label: st||"未設定"};
+}
+
+/* ファネル各段階（件数キー・単価キー・目標キー） */
+const STAGES = [
+  {key:"day1",    label:"Day1",   cpa:"day1Cpa",    tgt:"day1"},
+  {key:"finish",  label:"完走",   cpa:"finishCpa",  tgt:"finish"},
+  {key:"consult", label:"説明会", cpa:"consultCpa", tgt:"consult"},
+  {key:"close",   label:"成約",   cpa:"closeCpa",   tgt:"close"},
+];
+// ▼クリエイティブカードのファネル行スタイル（CSSファイルには追記せずインラインで完結させる）
+//   ラベル列は既定58pxだと「LINE追加」が収まらないため70pxへ。全行で同じ値にして桁を揃える。
+//   ▼2026-09-18 さらに「リンククリック数」(8文字)が70pxでは収まらないため96pxへ。
+//     リンククリック3行＋LINE追加＋ファネル4段の計8行すべてで同じ値を使うので、桁は揃ったまま。
+//   LINE追加行はカードの期間に合わせて集計するようになったので、他4行と同じ見た目にする
+//   （アンバー着色・行内注記は撤去。期間の但し書きはヘッダーの .cohort-note に1箇所だけ出す）。
+const STAGE_COLS = "96px 1fr auto";
+const STAGE_ROW_STYLE = {gridTemplateColumns:STAGE_COLS};
+const STAGE_RATE_STYLE = {fontSize:"11px",fontWeight:700,color:"var(--mute)",marginLeft:"5px"};
+// ▼広告ID(cid)の記録開始日。これより前は LINE追加を計測できていない
+const AF_SINCE = "2026-09-24";
+// "2026-09-02〜2026-09-08" のような集計期間文字列を {since,until} に分解する。
+//   区切り文字は環境差を避けるため「日付以外の1文字以上」として拾う。解釈できなければ null
+function parsePeriod(p){
+  const m = String(p==null?"":p).match(/(\d{4}-\d{2}-\d{2})\D+(\d{4}-\d{2}-\d{2})/);
+  return m ? {since:m[1], until:m[2]} : null;
+}
+// 件数 ÷ そのカードの期間のオプト数。分母が0／件数が非数なら「—」
+function optRate(cnt, opt){
+  if(!isNum(cnt) || !isNum(opt) || Number(opt)<=0) return "—";
+  return (Math.round(Number(cnt)/Number(opt)*1000)/10)+"%";
+}
+// ▼2026-09-18 率（分子÷分母）。丸め（小数第1位）と「—」の条件を optRate に委譲するだけの別名。
+//   リンククリック率＝linkClicks÷impressions、登録率＝opt÷linkClicks に使う。
+//   分母が0・キーが無い（undefined）・非数のときは optRate と同じく "—" を返すのでエラーにならない。
+const rateOf = (num, den)=> optRate(num, den);
+// ROAS：比率→% （roas×100 四捨五入）。値なしは「—」
+const roasPct = (v)=> isNum(v) ? Math.round(Number(v)*100)+"%" : "—";
+// ROASの色：日次=グレー / 7日間・累計=100%以上緑・未満赤
+function roasCls(v, isDaily){
+  if(isDaily) return "j-muted";
+  if(!isNum(v)) return "j-muted";
+  return Number(v)>=1 ? "j-good" : "j-bad";
+}
+// 単価：値あり(>0)は目標/限界で色分け、値なし(0/空)はグレー
+function priceCls(v, t){ return (isNum(v) && Number(v)>0) ? costClass(v,t) : "j-muted"; }
+function priceVal(v){ return (isNum(v) && Number(v)>0) ? yen(v) : "—"; }
+// 判定クラス → 円形アイコンの淡色背景クラス
+function clsTint(cls){ return cls==="j-good"?"tg":cls==="j-ok"?"ta":cls==="j-bad"?"tr":"tn"; }
+// プラン別成約数キーがデータにあるか
+function planAvailable(row){ return row.lightClose!=null || row.premiumClose!=null || row.blackClose!=null; }
+function planCount(v, avail){ return avail ? comma(v) : "—"; }
+// 件数（値なしは「—」）
+function cntDash(v){ return isNum(v) ? comma(v) : "—"; }
+// 成約率：集計した比率(数値)を%表示。null/空は「—」。390%等の異常値もそのまま
+function ratePct(v){ return (v==null || v==="") ? "—" : Math.round(Number(v)*100)+"%"; }
+// JSON行の成約率を表示。空は「—」。
+//   backend は "33.3%" という文字列を書き込むが、Googleスプレッドシートがパーセント数値 0.333 へ
+//   自動変換するため、APIからは数値で返ってくる（実測確認済み）。シートの列書式次第では
+//   文字列のまま来ることもあるので、数値・文字列の両方を受けて必ず「33.3%」形式にそろえる。
+//     数値0.333 → "33.3%" ／ 文字列"33.3%" → そのまま ／ 空・null → "—"
+function rateStr(v){
+  if(v==null || v==="") return "—";
+  if(typeof v==="number") return (Math.round(v*1000)/10)+"%";
+  const s=String(v).trim();
+  if(s==="") return "—";
+  if(s.indexOf("%")>=0) return s;
+  const n=Number(s);
+  return isNaN(n) ? s : (Math.round(n*1000)/10)+"%";
+}
+// 営業：成約率（数値%）→ 「67%（5/8）」。null は「—」
+function salesRate(rate, rateNum){
+  if(rate==null || rate==="") return "—";
+  const base = Math.round(Number(rate))+"%";
+  return rateNum ? base+"（"+rateNum+"）" : base;
+}
+// 営業：成約率の色分け（高=緑 / 中=黄 / 低=赤 / 値なし=グレー）
+function salesRateCls(rate){
+  if(rate==null || rate==="") return "j-muted";
+  const v=Number(rate);
+  if(v>=50) return "j-good";
+  if(v>=25) return "j-ok";
+  return "j-bad";
+}
+// 広告キー不明（空 or「不明」を含む）→ クリエイティブ別カードから除外
+function isUnknownAdKey(k){ const s=String(k||"").trim(); return s==="" || s.indexOf("不明")>=0; }
+
+/* ===== 広告ID検索（クリエイティブ一覧・営業分析・課題回答で共有） ===== */
+// 正規化：全角英数→半角、全角スペース→半角、前後trim、小文字化。検索語・adKey双方に適用して部分一致。
+function normAdKey(s){
+  return String(s==null?"":s)
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g, ch=>String.fromCharCode(ch.charCodeAt(0)-0xFEE0))
+    .replace(/　/g," ")
+    .trim().toLowerCase();
+}
+function adKeyHit(adKey, nq){ return !nq || normAdKey(adKey).indexOf(nq)>=0; }
+// 検索入力ボックス（リアルタイム絞り込み・×でクリア）。状態はApp保持＝3タブで共有。
+function AdKeySearch({q, setQ}){
+  return (
+    <div className="adq">
+      <span className="adq-ic"><Icon name="search" size={15} /></span>
+      <input type="text" placeholder="広告IDで検索（例：ad0020）" value={q} onChange={e=>setQ(e.target.value)} />
+      {q? <button className="adq-clear" title="検索をクリア" onClick={()=>setQ("")}>×</button> : null}
+    </div>
+  );
+}
+// 総売上 = OWNER'S(revenue) + セルフ + サロン
+function totalRevenueOf(row){ return (N(row.revenue)||0)+(N(row.selfstudyRevenue)||0)+(N(row.salonRevenue)||0); }
+// 旧プラン成約数 = 成約 − Light − Premium − Black（JSONに専用キーが無いため引き算。負にしない）
+function legacyCloseOf(row){ return Math.max(0, (N(row.close)||0) - (N(row.lightClose)||0) - (N(row.premiumClose)||0) - (N(row.blackClose)||0)); }
+
+/* ===== 並び替え用キー（無効値は必ず末尾へ） ===== */
+// 単価/CPA：>0 の数値のみ有効。0・空・未計測は null（末尾扱い）
+function priceKey(v){ return (isNum(v) && Number(v)>0) ? Number(v) : null; }
+// スコア：文字列「…（X/Y）…」から達成率 X/Y（0〜1, 高いほど好調）。取れなければ null
+function scoreKey(s){
+  const m = String(s||"").match(/[（(]\s*(\d+)\s*\/\s*(\d+)\s*[）)]/);
+  if(!m) return null;
+  const num=Number(m[1]), den=Number(m[2]);
+  return den>0 ? num/den : null;
+}
+// 配信開始日（クリエイティブ台帳B列・実体はMetaのcreated_time）：数字のみを抽出して14桁数値化。
+// 例 "2026-07-15 00:00:00"→20260715000000。"yyyy-MM-dd"のみでも右0埋めで対応。取れなければ null（末尾扱い）。
+// ブラウザ依存の Date.parse を使わない決定論的キー。
+function startKey(meta){
+  const d=String(((meta||{}).startDate)||"").replace(/\D/g,"");
+  return d.length>=8 ? Number(d.slice(0,14).padEnd(14,"0")) : null;
+}
+// カード表示用：配信開始日を yyyy/MM/dd に整形。値が無い/形式外なら空文字（何も表示しない）
+function startDateDisp(meta){
+  const m=String(((meta||{}).startDate)||"").trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m? (m[1]+"/"+m[2]+"/"+m[3]) : "";
+}
+// 無効値(null)を必ず末尾に固定する比較。dir:"asc"=小さいほど上 / "desc"=大きいほど上
+function cmpInvalidLast(av, bv, dir){
+  const aOk=av!=null, bOk=bv!=null;
+  if(!aOk && !bOk) return 0;
+  if(!aOk) return 1;   // a を後ろへ
+  if(!bOk) return -1;  // b を後ろへ
+  return dir==="asc" ? (av-bv) : (bv-av);
+}
+const PRICE_SORTS = ["cpa","day1Cpa","finishCpa","consultCpa","closeCpa"];
+
+// 履歴/カード共通：キービジュアルのサムネイル（期限切れ等は「画像なし」）
+function Thumb({src, size}){
+  const [err,setErr]=useState(false);
+  const s=size||36;
+  if(!src || err) return <div className="thumb ph" style={{width:s,height:s}}>無</div>;
+  return <img className="thumb" style={{width:s,height:s}} src={src} alt=""
+    referrerPolicy="no-referrer" loading="lazy" onError={()=>setErr(true)} />;
+}
+
+/* ============================================================
+   集計（ダッシュボード総合評価）
+============================================================ */
+function aggregate(rows, targets){
+  const sum = (k)=> rows.reduce((a,r)=> a + (N(r[k])||0), 0);
+  const spend=sum("spend"), opt=sum("opt"), day1=sum("day1"),
+        finish=sum("finish"), consult=sum("consult"), close=sum("close");
+  const light=sum("lightClose"), premium=sum("premiumClose"), black=sum("blackClose");
+  const selfClose=sum("selfstudyClose"), salonClose=sum("salonClose");
+  const revenueOwners=sum("revenue");                                  // OWNER'Sプラン合計
+  const selfRev=sum("selfstudyRevenue"), salonRev=sum("salonRevenue");
+  const revenue=revenueOwners+selfRev+salonRev;                        // 総売上
+  const planAvail = rows.some(planAvailable);
+  const cpa = opt>0 ? spend/opt : null;
+  const day1Cpa = day1>0 ? spend/day1 : null;
+  const finishCpa = finish>0 ? spend/finish : null;
+  const consultCpa = consult>0 ? spend/consult : null;
+  const closeCpa = close>0 ? spend/close : null;
+  const roas = spend>0 ? revenue/spend : null;                         // 総売上ベース
+  // ダウンセル成約率（分母0以下は null＝「—」）。390%等の異常値はそのまま
+  const ownersRate = consult>0 ? close/consult : null;
+  const selfDenom = consult-close;
+  const selfRate = selfDenom>0 ? selfClose/selfDenom : null;
+  const salonDenom = consult-close-selfClose;
+  const salonRate = salonDenom>0 ? salonClose/salonDenom : null;
+  const checks=[[cpa,targets.cpa],[day1Cpa,targets.day1],[finishCpa,targets.finish]];
+  let got=0, max=0;
+  checks.forEach(([v,t])=>{ if(v==null||!t) return; max+=2; if(v<=t.goal) got+=2; else if(v<=t.limit) got+=1; });
+  let verdict;
+  if(max===0) verdict={emo:"➡️",lab:"データ不足",cls:"mid",note:"集計対象の数値がまだありません"};
+  else{
+    const r=got/max;
+    if(r>=0.7) verdict={emo:"🔥",lab:"好調",cls:"good",note:"主要指標が目標を達成しています"};
+    else if(r>=0.4) verdict={emo:"➡️",lab:"普通",cls:"mid",note:"一部指標が許容範囲内です"};
+    else verdict={emo:"⚠️",lab:"不調",cls:"bad",note:"主要指標が目標を下回っています"};
+  }
+  return {spend,opt,day1,finish,consult,close,revenue,revenueOwners,
+    selfClose,salonClose,selfRev,salonRev,
+    cpa,day1Cpa,finishCpa,consultCpa,closeCpa,roas,
+    ownersRate,selfRate,salonRate,
+    light,premium,black,planAvail,count:rows.length,verdict};
+}
+
+function KV({src, alt}){
+  const [err,setErr]=useState(false);
+  if(!src || err) return <div className="kv ph">画像なし</div>;
+  return <img className="kv" src={src} alt={alt||""} loading="lazy" referrerPolicy="no-referrer" onError={()=>setErr(true)} />;
+}
+
+/* ============================================================
+   ① ダッシュボード
+============================================================ */
+function Dashboard({data}){
+  const [period,setPeriod]=useState("daily");
+  const labels={daily:"日次",weekly:"7日間",cumulative:"累計"};
+  const rows = data[period]||[];
+  const targets = data.targets||{};
+  const ag = useMemo(()=>aggregate(rows,targets),[rows,targets]);
+  const lu = (data.lastUpdated||{})[period];
+  const isDaily = period==="daily";
+  const lagNote = "※成約はオプトの数日後に反映";
+
+  const cpaCls = costClass(ag.cpa, targets.cpa);
+  const cpaBadge = ag.cpa==null ? null
+    : cpaCls==="j-good" ? {label:"達成",cls:"b-good"}
+    : cpaCls==="j-ok" ? {label:"許容",cls:"b-ok"}
+    : {label:"超過",cls:"b-bad"};
+  const cpaTint = cpaCls==="j-good"?"tg":cpaCls==="j-ok"?"ta":cpaCls==="j-bad"?"tr":"tp";
+
+  const T = targets;
+  const noteTgt = (t)=> t ? ("目標 "+yen(t.goal)+" / 限界 "+yen(t.limit)) : "";
+  const priceCard = (k, v, t)=>{
+    const cls = priceCls(v, t);
+    return {k, v:priceVal(v), icon:"japanese-yen", tint:clsTint(cls), cls, sub:noteTgt(t), price:true};
+  };
+  const roasC = roasCls(ag.roas, isDaily);
+
+  const cards=[
+    {k:"消化金額", v:yen0(ag.spend), icon:"japanese-yen", tint:"tp"},
+    {k:"オプト数", v:comma(ag.opt), icon:"user-plus", tint:"tp"},
+    {k:"CPA", v:yen(ag.cpa), icon:"target", tint:cpaTint, cls:cpaCls, sub:noteTgt(T.cpa), badge:cpaBadge},
+    {k:"Day1提出数", v:comma(ag.day1), icon:"file-text", tint:"tp"},
+    priceCard("Day1単価", ag.day1Cpa, T.day1),
+    {k:"完走数", v:comma(ag.finish), icon:"flag", tint:"tp"},
+    priceCard("完走単価", ag.finishCpa, T.finish),
+    {k:"説明会申込数", v:comma(ag.consult), icon:"calendar-check", tint:"tp"},
+    priceCard("説明会申込単価", ag.consultCpa, T.consult),
+    {k:"成約数(OWNER'S)", v:comma(ag.close), icon:"handshake", tint:"tp", note: isDaily?lagNote:""},
+    Object.assign(priceCard("成約単価", ag.closeCpa, T.close), {note: isDaily?lagNote:""}),
+    {plan:true, k:"成約プラン内訳", icon:"handshake", tint:"tp",
+      pl:ag.light, pp:ag.premium, pb:ag.black, avail:ag.planAvail,
+      pleg: Math.max(0, ag.close-ag.light-ag.premium-ag.black),
+      sub: ag.planAvail ? "" : "※API未提供のため「—」", note: isDaily?lagNote:""},
+    {k:"セルフスタディ成約数", v:comma(ag.selfClose), icon:"book-open", tint:"tp", sub:"@¥148,000/件", note: isDaily?lagNote:""},
+    {k:"サロン成約数", v:comma(ag.salonClose), icon:"users", tint:"tp", sub:"@¥30,000/件", note: isDaily?lagNote:""},
+    {rates:true, k:"ダウンセル成約率", icon:"percent", tint:"tp",
+      ro:ag.ownersRate, rs:ag.selfRate, rl:ag.salonRate},
+    {k:"成約売上(総売上)", v:yen0(ag.revenue), icon:"wallet", tint:"tp", sub:"OWNER'S＋セルフ＋サロン", note: isDaily?lagNote:""},
+    {k:"ROAS", v:roasPct(ag.roas), icon:"trending-up", tint:clsTint(roasC), cls:roasC, sub:"総売上÷消化", note: isDaily?lagNote:""},
+  ];
+
+  return (
+    <div>
+      <div className="row-controls">
+        <div className="seg">
+          {["daily","weekly","cumulative"].map(p=>(
+            <button key={p} className={period===p?"active":""} onClick={()=>setPeriod(p)}>{labels[p]}</button>
+          ))}
+        </div>
+        <span className="count">{ag.count}件のファネルを集計</span>
+      </div>
+
+      <div className={"verdict "+ag.verdict.cls}>
+        <div className="verdict-ic"><Icon name="flame" size={34} sw={1.75} /></div>
+        <div>
+          <div className="lab">総合評価：{ag.verdict.lab}</div>
+          <div className="note">{ag.verdict.note}（{labels[period]}）</div>
+        </div>
+      </div>
+
+      <div className="cards">
+        {cards.map((c,i)=>(
+          <div className="kpi" key={i}>
+            <div className={"kpi-ic "+(c.tint||"tp")}><Icon name={c.icon} size={23} /></div>
+            <div className="kpi-body">
+              <div className="kpi-k">{c.k}</div>
+              {c.plan? (
+                <div className="planrow">
+                  <span><i>Light</i>{planCount(c.pl,c.avail)}</span>
+                  <span><i>Premium</i>{planCount(c.pp,c.avail)}</span>
+                  <span><i>Black</i>{planCount(c.pb,c.avail)}</span>
+                  <span><i>旧プラン</i>{comma(c.pleg)}</span>
+                </div>
+              ): c.rates? (
+                <div className="planrow">
+                  <span><i>OWNER'S</i>{ratePct(c.ro)}</span>
+                  <span><i>セルフ</i>{ratePct(c.rs)}</span>
+                  <span><i>サロン</i>{ratePct(c.rl)}</span>
+                </div>
+              ):(
+                <div className={"kpi-v "+(c.cls||"")+((c.v||"").length>9?" sm":"")}>{c.v}</div>
+              )}
+              {c.sub? <div className="kpi-sub">{c.sub}</div>:null}
+              {c.note? <div className="note2">{c.note}</div>:null}
+            </div>
+            {c.badge? <span className={"kbadge "+c.badge.cls}>{c.badge.label}</span>:null}
+          </div>
+        ))}
+      </div>
+      {lu? <div className="meta-line" style={{marginTop:"16px"}}>最終更新：{lu}</div>:null}
+    </div>
+  );
+}
+
+/* ============================================================
+   ② クリエイティブ一覧（creatives × cumulative をマージ）
+============================================================ */
+function metricMap(rows){
+  const m={};
+  (rows||[]).forEach(r=>{
+    const k=r.adKey; if(!k) return;
+    const t=m[k]||(m[k]={spend:0,opt:0,day1:0,finish:0,consult:0,close:0,revenue:0,score:""});
+    t.spend+=N(r.spend)||0; t.opt+=N(r.opt)||0; t.day1+=N(r.day1)||0;
+    t.finish+=N(r.finish)||0; t.consult+=N(r.consult)||0; t.close+=N(r.close)||0;
+    t.revenue+=N(r.revenue)||0;
+    if(!t.score && r.score && r.score!=="-") t.score=r.score;
+  });
+  return m;
+}
+function statusRank(s){ const i=statusInfo(s); return i.cls==="on"?0:i.cls==="off"?1:2; }
+
+function CreativeCard({c, mt}){
+  const si=statusInfo(c.status);
+  const cpa = mt && mt.opt>0 ? mt.spend/mt.opt : null;
+  const rating = mt ? ratingFromText(mt.score) : null;
+  return (
+    <div className={"cc "+si.card}>
+      <KV src={c.image} alt={c.adKey} />
+      <div className="body">
+        <span className={"pill "+si.cls}>{si.label}</span>
+        <div className="ck">{c.adKey}</div>
+        {c.title? <div className="ctitle">{c.title}</div>:null}
+        {mt? (
+          <div className="mini">
+            <div className="m"><div className="mk">消化</div><div className="mv">{yen0(mt.spend)}</div></div>
+            <div className="m"><div className="mk">オプト</div><div className="mv">{comma(mt.opt)}</div></div>
+            <div className="m"><div className="mk">CPA</div><div className="mv">{yen(cpa)}</div></div>
+            <div className="m"><div className="mk">Day1</div><div className="mv">{comma(mt.day1)}</div></div>
+            <div className="m"><div className="mk">完走</div><div className="mv">{comma(mt.finish)}</div></div>
+            <div className="m"><div className="mk">成約</div><div className="mv">{comma(mt.close)}</div></div>
+          </div>
+        ):<div className="ctext">累計実績データなし</div>}
+        {rating? (
+          <div className={"scoreline sc-"+rating.cls}>
+            <span className="sc-ic"><Icon name={scoreIcon(rating.cls)} size={14} /></span>
+            <span className="sc-tx">{formatScore(mt.score)}</span>
+          </div>
+        ):null}
+        {c.body? <div className="ctext ctext-body">{c.body}</div>:null}
+      </div>
+    </div>
+  );
+}
+
+/* ====== 課題提出進捗 詳細（クリエイティブカード内アコーディオン） ====== */
+// stage文字列 → バッジ用クラス。「脱落」を最優先で判定（"Day○提出後に脱落"対策）。
+function stageBadgeCls(stage){
+  const s=String(stage||"");
+  if(s.indexOf("脱落")>=0)   return "pb-drop";     // 黒背景・白文字
+  if(s.indexOf("成約")>=0)   return "pb-close";    // 赤背景・白文字
+  if(s.indexOf("説明会")>=0) return "pb-consult";  // 黄背景・黒文字
+  if(s.indexOf("卒業")>=0)   return "pb-grad";     // オレンジ背景・黒文字
+  if(s.indexOf("提出済み")>=0) return "pb-day";    // 肌色背景・黒文字（継続中）
+  return "pb-other";
+}
+const PB_RANK={"pb-close":0,"pb-consult":1,"pb-grad":2,"pb-drop":3,"pb-day":4,"pb-other":5};
+// 各カードに表示する課題提出者リスト（現在の期間に連動）。デフォルト閉。
+function ProgressDetail({items}){
+  const [open,setOpen]=useState(false);
+  const list=items||[];
+  // 段階ごとにクラスタリング（成約→説明会→卒業→脱落→提出済み→その他）。同段階内は元の順を維持。
+  const sorted=useMemo(()=>list
+    .map((p,i)=>({p,i,r:PB_RANK[stageBadgeCls(p.stage)]}))
+    .sort((a,b)=> a.r!==b.r ? a.r-b.r : a.i-b.i)
+    .map(x=>x.p), [list]);
+  return (
+    <div className="pd">
+      <button className={"pd-head"+(open?" open":"")} onClick={()=>setOpen(o=>!o)}>
+        <span className="pd-ic"><Icon name="users" size={14} /></span>
+        <span className="pd-title">課題提出進捗 詳細</span>
+        <span className="pd-cnt">（{list.length}名）</span>
+        <span className="pd-chev"><Icon name={open?"chevron-up":"chevron-down"} size={16} /></span>
+      </button>
+      {open? (
+        <div className="pd-body">
+          {sorted.length? sorted.map((p,i)=>(
+            <span className="pchip" key={i}>
+              <span className="pname" title={p.name}>{p.name||"(名前なし)"}</span>
+              <span className={"pbadge "+stageBadgeCls(p.stage)}>{p.stage}</span>
+            </span>
+          )) : <div className="pd-empty">この期間の課題提出者はいません</div>}
+        </div>
+      ):null}
+    </div>
+  );
+}
+
+/* ====== AI分析（段階C-1：クリエイティブ別 傾向＋裏付け＋訴求案） ====== */
+// 配列セクションの箇条書き（空項目は除外。全て空なら「該当なし」）
+function AiList({items}){
+  const list=(items||[]).filter(x=>x!=null && String(x).trim());
+  if(!list.length) return <div className="ai-empty">該当なし</div>;
+  return <ul className="ai-list">{list.map((t,i)=><li key={i}>{String(t)}</li>)}</ul>;
+}
+function AiSection({icon, title, children}){
+  return (
+    <div className="ai-sec">
+      <div className="ai-sec-h"><span className="ai-ic"><Icon name={icon} size={13} /></span>{title}</div>
+      {children}
+    </div>
+  );
+}
+// 分析JSON（analysis）を7セクションで整形表示
+function AiResult({ai, onRerun}){
+  const props=(ai.creative_proposals||[]).filter(p=>p && (p.headline || p.reason));
+  const budget=ai.budget_evidence!=null && String(ai.budget_evidence).trim() ? String(ai.budget_evidence) : "";
+  return (
+    <div className="ai-panel">
+      {ai.summary? <div className="ai-sum">{String(ai.summary)}</div>:null}
+      <AiSection icon="flame" title="惹かれた訴求"><AiList items={ai.appeal_trends} /></AiSection>
+      <AiSection icon="target" title="悩み・欲しい未来"><AiList items={ai.pain_and_future} /></AiSection>
+      <AiSection icon="wallet" title="クレカ枠の裏付け">
+        {budget? <div className="ai-budget">{budget}</div>:<div className="ai-empty">該当なし</div>}
+      </AiSection>
+      <AiSection icon="images" title="ショップジャンル傾向"><AiList items={ai.shop_genre_trends} /></AiSection>
+      <AiSection icon="book-open" title="Day5の本音"><AiList items={ai.day5_insights} /></AiSection>
+      <AiSection icon="sparkles" title="新クリエイティブ訴求案">
+        {props.length? (
+          <div className="ai-props">
+            {props.map((p,i)=>(
+              <div className="ai-prop" key={i}>
+                {p.headline? <div className="aph">{String(p.headline)}</div>:null}
+                {p.reason? <div className="apr">{String(p.reason)}</div>:null}
+              </div>
+            ))}
+          </div>
+        ):<div className="ai-empty">該当なし</div>}
+      </AiSection>
+      <button className="ai-btn" onClick={onRerun}><Icon name="sparkles" size={14} /> 再分析</button>
+    </div>
+  );
+}
+
+/* ============================================================
+   タグ機能（クリエイティブ一覧専用）
+   ・紐づけデータは App が保持（[{id,adKey,tagName,createdAt}]）
+   ・色はタグ名のハッシュから決定論的に選択（リロードしても同色）
+============================================================ */
+const TAG_COLORS=[
+  {bg:"#ece9fe",fg:"#6c4cf0"}, // パープル
+  {bg:"#dcfce7",fg:"#16a34a"}, // グリーン
+  {bg:"#fef3c7",fg:"#b45309"}, // アンバー
+  {bg:"#fee2e2",fg:"#dc2626"}, // レッド
+  {bg:"#dbeafe",fg:"#2563eb"}, // ブルー
+  {bg:"#cffafe",fg:"#0e7490"}, // シアン
+  {bg:"#fce7f3",fg:"#db2777"}, // ピンク
+  {bg:"#ffedd5",fg:"#ea580c"}, // オレンジ
+  {bg:"#ccfbf1",fg:"#0d9488"}, // ティール
+  {bg:"#e0e7ff",fg:"#4f46e5"}, // インディゴ
+];
+function tagColor(name){
+  const s=String(name||""); let h=0;
+  for(let i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))>>>0; }
+  return TAG_COLORS[h%TAG_COLORS.length];
+}
+
+// カード上のタグ行：付与済みバッジ（×で解除）＋「＋タグ」プルダウン（既存タグ選択／新規作成）
+// note：プルダウン内に出す注記（省略可。課題回答タブのみ使用。未指定なら表示なし＝従来どおり）
+function TagRow({adKey, tagList, allTagNames, onAdd, onRemove, note}){
+  const [open,setOpen]=useState(false);
+  const [q,setQ]=useState("");
+  const candidates=allTagNames.filter(t=>tagList.indexOf(t)<0);
+  const name=q.trim();
+  function pick(t){ setOpen(false); setQ(""); onAdd(adKey, t); }
+  return (
+    <div className="tagrow">
+      {tagList.map(t=>{
+        const c=tagColor(t);
+        return (
+          <span className="tagchip" key={t} style={{background:c.bg,color:c.fg}}>
+            {t}
+            <button className="tagchip-x" title="このタグを外す" style={{color:c.fg}} onClick={()=>onRemove(adKey, t)}>×</button>
+          </span>
+        );
+      })}
+      <span className="tagadd-wrap">
+        <button className="tagadd-btn" onClick={()=>{ setOpen(o=>!o); setQ(""); }}>＋タグ</button>
+        {open? (
+          <React.Fragment>
+            <span className="tagpop-veil" onClick={()=>{ setOpen(false); setQ(""); }}></span>
+            <span className="tagpop">
+              <input type="text" autoFocus value={q} placeholder="新しいタグ名を入力"
+                onChange={e=>setQ(e.target.value)}
+                onKeyDown={e=>{ if(e.key==="Enter"&&name) pick(name); if(e.key==="Escape"){ setOpen(false); setQ(""); } }} />
+              {name? <button className="tagpop-new" onClick={()=>pick(name)}>「{name}」を作成して付与</button> : null}
+              {candidates.length? (
+                <span className="tagpop-list">
+                  {candidates.map(t=>{
+                    const c=tagColor(t);
+                    return <button key={t} className="tagpop-item" onClick={()=>pick(t)}><i style={{background:c.fg}}></i>{t}</button>;
+                  })}
+                </span>
+              ) : (name? null : <span className="tagpop-empty">既存タグはありません。名前を入力して作成できます</span>)}
+              {note? <span className="tagpop-note">{note}</span> : null}
+            </span>
+          </React.Fragment>
+        ):null}
+      </span>
+    </div>
+  );
+}
+
+// 「タグを管理」モーダル：全タグ＋付与件数、リネーム（即全反映）・削除（件数確認付き）
+function TagManageModal({tagCounts, busy, onRename, onDelete, onClose}){
+  const [editing,setEditing]=useState(null); // 編集中のタグ名
+  const [val,setVal]=useState("");
+  function submitRename(oldName){
+    const nn=val.trim();
+    if(!nn||nn===oldName){ setEditing(null); return; }
+    setEditing(null);
+    onRename(oldName, nn);
+  }
+  return (
+    <div className="tp-overlay" onClick={busy?null:onClose}>
+      <div className="tp-modal" onClick={e=>e.stopPropagation()}>
+        <h3>タグを管理</h3>
+        {tagCounts.length===0? <div className="tg-none">タグはまだありません。カードの「＋タグ」から作成できます。</div> : (
+          <div className="tg-list">
+            {tagCounts.map(tc=>{
+              const c=tagColor(tc.name);
+              return (
+                <div className="tg-row" key={tc.name}>
+                  {editing===tc.name? (
+                    <React.Fragment>
+                      <input className="tg-input" type="text" autoFocus value={val}
+                        onChange={e=>setVal(e.target.value)}
+                        onKeyDown={e=>{ if(e.key==="Enter") submitRename(tc.name); if(e.key==="Escape") setEditing(null); }} />
+                      <div className="tg-actions">
+                        <button className="tp-btn" disabled={busy} onClick={()=>submitRename(tc.name)}>保存</button>
+                        <button className="tp-btn" disabled={busy} onClick={()=>setEditing(null)}>キャンセル</button>
+                      </div>
+                    </React.Fragment>
+                  ):(
+                    <React.Fragment>
+                      <span className="tagchip" style={{background:c.bg,color:c.fg}}>{tc.name}</span>
+                      <span className="tg-count">{tc.count}件</span>
+                      <div className="tg-actions">
+                        <button className="tp-btn" disabled={busy} onClick={()=>{ setEditing(tc.name); setVal(tc.name); }}>リネーム</button>
+                        <button className="tp-btn danger" disabled={busy} onClick={()=>onDelete(tc.name, tc.count)}>削除</button>
+                      </div>
+                    </React.Fragment>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <div className="tp-modal-foot">
+          <button className="tp-cancel" onClick={onClose} disabled={busy}>閉じる</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ▼3タブ共通：タグ集計・書き込み（tagData/setTagData は App 保持なので、どのタブで書いても全タブに即反映）。
+//   楽観更新＋失敗時ロールバック＋「保存中…/保存しました」表示。ロジックは旧 Creatives 実装をそのまま移設。
+function useTagStore(tagData, setTagData){
+  const [tagBusy,setTagBusy]=useState(false);
+  const [tagMsg,setTagMsg]=useState(null); // {text, kind:"info"|"ok"|"err"}
+  const tagMsgTimer=useRef(null);
+  function flashTagMsg(text,kind){
+    setTagMsg({text,kind});
+    if(tagMsgTimer.current) clearTimeout(tagMsgTimer.current);
+    if(kind!=="err") tagMsgTimer.current=setTimeout(()=>setTagMsg(null), 2500);
+  }
+  const tagsByAd = useMemo(()=>{ const m={}; (tagData||[]).forEach(t=>{ (m[t.adKey]=m[t.adKey]||[]).push(t.tagName); }); return m; },[tagData]);
+  const allTagNames = useMemo(()=>{ const s={}; (tagData||[]).forEach(t=>{ s[t.tagName]=true; }); return Object.keys(s).sort((a,b)=>a.localeCompare(b,"ja")); },[tagData]);
+  const tagCounts = useMemo(()=> allTagNames.map(n=>({name:n, count:(tagData||[]).filter(t=>t.tagName===n).length})),[allTagNames,tagData]);
+  async function tagWrite(body){
+    try{ return await postTagWrite(body); }
+    catch(e){ console.warn("[OWNER'S] tag 書き込み失敗:", e.message); return { ok:false, error:"通信に失敗しました" }; }
+  }
+  async function addTag(adKey, tagName){
+    const name=String(tagName||"").trim();
+    if(!name||!adKey) return;
+    const prev=tagData||[];
+    if(prev.some(t=>t.adKey===adKey&&t.tagName===name)) return;
+    const tempId="tmp-"+Date.now()+"-"+Math.random().toString(36).slice(2,8);
+    setTagData(prev.concat([{id:tempId, adKey:adKey, tagName:name, createdAt:""}]));
+    flashTagMsg("保存中…","info");
+    const res=await tagWrite({action:"tagAdd", adKey:adKey, tagName:name});
+    if(!res||!res.ok){ setTagData(prev); flashTagMsg("保存に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; }
+    if(res.id) setTagData(cur=>(cur||[]).map(t=>t.id===tempId? {...t, id:res.id} : t));
+    flashTagMsg("保存しました","ok");
+  }
+  async function removeTag(adKey, tagName){
+    const prev=tagData||[];
+    setTagData(prev.filter(t=>!(t.adKey===adKey&&t.tagName===tagName)));
+    flashTagMsg("保存中…","info");
+    const res=await tagWrite({action:"tagRemove", adKey:adKey, tagName:tagName});
+    if(!res||!res.ok){ setTagData(prev); flashTagMsg("保存に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; }
+    flashTagMsg("保存しました","ok");
+  }
+  async function renameTag(oldName, newName){
+    const prev=tagData||[];
+    setTagBusy(true);
+    // 楽観更新：改名し、改名先と重複した紐づけ（同一adKey×tagName）は1つに統合
+    const seen={}; const next=[];
+    prev.forEach(t=>{
+      const nn=t.tagName===oldName? {...t, tagName:newName} : t;
+      const k=nn.adKey+"\u0000"+nn.tagName;
+      if(seen[k]) return; seen[k]=true; next.push(nn);
+    });
+    setTagData(next);
+    flashTagMsg("保存中…","info");
+    const res=await tagWrite({action:"tagRename", oldName:oldName, newName:newName});
+    setTagBusy(false);
+    if(!res||!res.ok){ setTagData(prev); flashTagMsg("保存に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; }
+    flashTagMsg("保存しました","ok");
+  }
+  async function deleteTag(tagName, count){
+    if(!window.confirm("このタグは"+count+"件のクリエイティブに付いています。\n削除しますか？（付与がすべて外れます）")) return;
+    const prev=tagData||[];
+    setTagBusy(true);
+    setTagData(prev.filter(t=>t.tagName!==tagName));
+    flashTagMsg("保存中…","info");
+    const res=await tagWrite({action:"tagDelete", tagName:tagName});
+    setTagBusy(false);
+    if(!res||!res.ok){ setTagData(prev); flashTagMsg("削除に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; }
+    flashTagMsg("保存しました","ok");
+  }
+  return { tagsByAd, allTagNames, tagCounts, tagBusy, tagMsg, addTag, removeTag, renameTag, deleteTag };
+}
+
+// ▼3タブ共通：タグフィルタバー（全タグボタン・OR選択・色付き強調・一括解除・「タグを管理」・保存メッセージ）。
+//   「タグを管理」モーダルの開閉もここで持つ（modalはposition:fixedなので描画位置は影響しない）。
+//   UIは旧 Creatives のタグバーをそのまま部品化。selTags/setSelTags は App 保持＝3タブで共有・連動。
+function TagBar({store, selTags, setSelTags, tagState, onTagRetry}){
+  const [tagModal,setTagModal]=useState(false);
+  const {allTagNames, tagCounts, tagBusy, tagMsg, renameTag, deleteTag}=store;
+  return (
+    <React.Fragment>
+      <div className="tagbar">
+        <span className="tagbar-label">タグ：</span>
+        {tagState==="loading"? <span className="tagbar-note">読み込み中…</span> : null}
+        {tagState==="error"? <span className="tagbar-note">タグの取得に失敗しました<button className="reload" style={{marginLeft:6}} onClick={onTagRetry}>↻ 再試行</button></span> : null}
+        {tagState==="done"&&allTagNames.length===0? <span className="tagbar-note">タグ未登録（各カードの「＋タグ」から作成できます）</span> : null}
+        {allTagNames.map(t=>{
+          const c=tagColor(t); const on=selTags.indexOf(t)>=0;
+          return (
+            <button key={t} className={"tagf-btn"+(on?" on":"")}
+              style={on? {background:c.bg,color:c.fg,borderColor:c.fg} : null}
+              onClick={()=>setSelTags(p=> p.indexOf(t)>=0? p.filter(x=>x!==t) : p.concat([t]))}>
+              <i style={{background:c.fg}}></i>{t}
+            </button>
+          );
+        })}
+        {selTags.length? <button className="tagf-clear" onClick={()=>setSelTags([])}>タグ絞り込みを解除</button> : null}
+        <button className="tagf-manage" onClick={()=>setTagModal(true)}>タグを管理</button>
+        {tagMsg? <span className={"tp-msg"+(tagMsg.kind==="ok"?" ok":tagMsg.kind==="err"?" err":"")}>{tagMsg.text}</span> : null}
+      </div>
+      {tagModal? <TagManageModal tagCounts={tagCounts} busy={tagBusy} onRename={renameTag} onDelete={deleteTag} onClose={()=>{ if(!tagBusy) setTagModal(false); }} /> : null}
+    </React.Fragment>
+  );
+}
+
+// 期間配列の1行（クリエイティブ）を全指標＋単価で表示
+function FunnelCard({row, meta, targets, isDaily, period, afCount, tagList, allTagNames, onTagAdd, onTagRemove}){
+  const si=statusInfo(row.status);
+  const img = row.image || (meta&&meta.image) || "";
+  const rating = ratingFromText(row.score);
+  const cpaC = costClass(N(row.cpa), targets.cpa);
+  // ▼LINE追加の単価＝そのカードの期間の消化金額 ÷ 同期間のLINE追加数（他の段と同じ計算方法）
+  const afCpa = (afCount!=null && afCount>0 && isNum(row.spend)) ? Number(row.spend)/afCount : null;
+  const avail = planAvailable(row);
+  // ▼AI分析（手動トリガー・押した時だけ analyze を叩く。コスト管理のため自動では走らせない）
+  const [aiState,setAiState]=useState("idle"); // idle|loading|done|error
+  const [ai,setAi]=useState(null);
+  const [aiErr,setAiErr]=useState("");
+  async function runAnalyze(){
+    if(aiState==="loading") return;
+    setAiState("loading"); setAiErr("");
+    try{
+      const url=API+"?type=analyze&adKey="+encodeURIComponent(row.adKey)+"&_="+Date.now();
+      const raw=await jsonp(url, 90000); // GAS→Anthropicで10〜30秒。コスト都合でリトライはしない
+      if(raw && raw.ok===false){ setAiErr(raw.error||"分析に失敗しました"); setAiState("error"); return; }
+      const a=(raw && raw.analysis)?raw.analysis:raw;
+      if(!a || typeof a!=="object"){ setAiErr("分析結果が空でした"); setAiState("error"); return; }
+      setAi(a); setAiState("done");
+      console.log("%c[OWNER'S] type=analyze : ✅ "+row.adKey,"color:#6c4cf0;font-weight:bold");
+    }catch(e){ setAiErr("分析に失敗しました（"+e.message+"）"); setAiState("error"); console.warn("[OWNER'S] analyze 取得失敗:", e.message); }
+  }
+  return (
+    <div className={"cc "+si.card}>
+      <KV src={img} alt={row.adKey} />
+      <div className="body">
+        <span className={"pill "+si.cls}>{si.label}</span>
+        <div className="ck">{row.adKey}{startDateDisp(meta)? <span className="ck-date">入稿 {startDateDisp(meta)}</span> : null}</div>
+        {meta&&meta.title? <div className="ctitle">{meta.title}</div>:null}
+
+        {onTagAdd? <TagRow adKey={row.adKey} tagList={tagList||[]} allTagNames={allTagNames||[]} onAdd={onTagAdd} onRemove={onTagRemove} /> : null}
+
+        <div className="fm-top">
+          <div className="fm-cell"><span>消化金額</span><b>{yen0(row.spend)}</b></div>
+          <div className="fm-cell"><span>オプト数</span><b>{comma(row.opt)}</b></div>
+          <div className="fm-cell"><span>CPA</span><b className={cpaC}>{yen(row.cpa)}</b></div>
+        </div>
+
+        {/* ▼2026-09-23 リンククリック指標。表示位置は変えず（消化金額/オプト数/CPA の下・LINE追加の上）、
+            横長の fm-stage 3行から、1段目と同じ .fm-top / .fm-cell の3ブロック横並びへ配置のみ変更した。
+            ・クリック数 … row.linkClicks（Metaの inline_link_clicks を広告キー×期間で合算した実数）
+            ・クリック率 … linkClicks ÷ impressions（表示回数は分母としてのみ使い、カードには出さない）
+            ・登録率     … opt ÷ linkClicks（オプト数は既存のUTAGE実数）
+            期間連動は消化金額(spend)と同一経路（日次/7日間/累計＝?type=summary の各シート、
+            指定期間＝?type=report）なので、4モードすべてでカードの集計期間と一致する。
+            丸めと「—」判定は rateOf（=optRate）に委譲＝他の率と定義を1箇所に保つ。値の式は移設前と同一。
+            ラベルはカード幅が最も狭くなる3カラム表示（セル内幅約56px）でも1行に収まる5文字に揃えてある。
+            これを長くすると折り返して3ブロックの数値の縦位置がずれるので注意。 */}
+        <div className="fm-top">
+          <div className="fm-cell"><span>クリック数</span><b>{isNum(row.linkClicks) ? comma(row.linkClicks)+"件" : "—"}</b></div>
+          <div className="fm-cell"><span>クリック率</span><b>{rateOf(row.linkClicks, row.impressions)}</b></div>
+          <div className="fm-cell"><span>登録率</span><b>{rateOf(row.opt, row.linkClicks)}</b></div>
+        </div>
+
+        <div className="fm-stages">
+
+          {/* ▼LINE追加（?type=adfunnel の日別内訳をカードの期間で合計したもの）。
+              件数・率・単価とも他4行と同じ期間・同じ分母で算出するため、見た目も揃える。
+              単価は 消化金額 ÷ 件数（他の段と同じ計算方法）。afCount が null なら未取得＝「—」。 */}
+          <div className="fm-stage" style={STAGE_ROW_STYLE}>
+            <span className="fs-k">LINE追加</span>
+            <span className="fs-c">
+              {afCount!=null ? comma(afCount)+"件" : "—"}
+              <span style={STAGE_RATE_STYLE}>({afCount!=null ? optRate(afCount, row.opt) : "—"})</span>
+            </span>
+            <span className="fs-p">単価 {priceVal(afCpa)}</span>
+          </div>
+
+          {STAGES.map(s=>{
+            const pv=N(row[s.cpa]); const pc=priceCls(pv,targets[s.tgt]);
+            return (
+              <div className="fm-stage" key={s.key} style={STAGE_ROW_STYLE}>
+                <span className="fs-k">{s.label}</span>
+                <span className="fs-c">
+                  {comma(row[s.key])}件
+                  <span style={STAGE_RATE_STYLE}>({optRate(row[s.key], row.opt)})</span>
+                </span>
+                <span className={"fs-p "+pc}>単価 {priceVal(pv)}</span>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="fm-plan">
+          <span>成約内訳</span>
+          <em>Light {planCount(N(row.lightClose),avail)}</em>
+          <em>Premium {planCount(N(row.premiumClose),avail)}</em>
+          <em>Black {planCount(N(row.blackClose),avail)}</em>
+          <em>旧プラン {comma(legacyCloseOf(row))}</em>
+          <em>セルフ {cntDash(N(row.selfstudyClose))}</em>
+          <em>サロン {cntDash(N(row.salonClose))}</em>
+        </div>
+
+        <div className="fm-plan">
+          <span>成約率</span>
+          <em>OWNER'S {rateStr(row.ownersCloseRate)}</em>
+          <em>セルフ {rateStr(row.selfstudyCloseRate)}</em>
+          <em>サロン {rateStr(row.salonCloseRate)}</em>
+        </div>
+
+        <div className="fm-top" style={{gridTemplateColumns:"repeat(2,1fr)"}}>
+          <div className="fm-cell"><span>成約売上(総売上)</span><b>{yen0(totalRevenueOf(row))}</b></div>
+          <div className="fm-cell"><span>ROAS</span><b className={roasCls(row.roas,isDaily)}>{roasPct(row.roas)}</b></div>
+        </div>
+        {isDaily? <div className="note2">※成約はオプトの数日後に反映</div>:null}
+
+        <ProgressDetail items={(meta && meta.progressDetail && meta.progressDetail[period]) || []} />
+
+        {rating? (
+          <div className={"scoreline sc-"+rating.cls}>
+            <span className="sc-ic"><Icon name={scoreIcon(rating.cls)} size={14} /></span>
+            <span className="sc-tx">{formatScore(row.score)}</span>
+          </div>
+        ):null}
+        {meta&&meta.body? <div className="ctext ctext-body">{meta.body}</div>:null}
+
+        {aiState==="idle"? (
+          <button className="ai-btn" onClick={runAnalyze}><Icon name="sparkles" size={15} /> AI分析</button>
+        ):null}
+        {aiState==="loading"? (
+          <div className="ai-loading"><span className="ai-spin"></span>AIが傾向を分析中…（10〜30秒）</div>
+        ):null}
+        {aiState==="error"? (
+          <div className="ai-err"><span>{aiErr}</span><button onClick={runAnalyze}>再試行</button></div>
+        ):null}
+        {aiState==="done" && ai? <AiResult ai={ai} onRerun={runAnalyze} />:null}
+      </div>
+    </div>
+  );
+}
+
+function Creatives({data, adFunnel, adQ, setAdQ, tagData, setTagData, tagState, onTagRetry, selTags, setSelTags}){
+  const fmtD=(d)=>{const z=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate());};
+  const [period,setPeriod]=useState("cumulative");
+  const [filter,setFilter]=useState("all");
+  const [sort,setSort]=useState("status");
+  // 指定期間（カスタム期間ファネル）
+  const [cSince,setCSince]=useState(()=>fmtD(new Date(Date.now()-14*86400000)));
+  const [cUntil,setCUntil]=useState(()=>fmtD(new Date()));
+  const [cRows,setCRows]=useState(null);
+  const [cState,setCState]=useState("idle"); // idle|loading|done|error
+  const [cErr,setCErr]=useState("");
+  const labels={daily:"日次",weekly:"7日間",cumulative:"累計",custom:"指定期間"};
+  const isCustom = period==="custom";
+  const rows = isCustom ? (cRows||[]) : (data[period]||[]);
+  const targets = data.targets||{};
+  const isDaily = period==="daily";
+
+  async function loadReport(){
+    setCState("loading"); setCErr("");
+    try{
+      const url=API+"?type=report&since="+encodeURIComponent(cSince)+"&until="+encodeURIComponent(cUntil)+"&mode=cumulative&_="+Date.now();
+      const raw=await jsonpRetry(url, 2, 28000);
+      if(raw && raw.ok===false){ setCErr(raw.error||"取得に失敗しました"); setCRows([]); setCState("error"); return; }
+      setCRows((raw&&raw.report)?raw.report:[]); setCState("done");
+      console.log("%c[OWNER'S] type=report : ✅ 取得成功 "+cSince+"〜"+cUntil,"color:#16a34a;font-weight:bold");
+    }catch(e){ setCErr("取得に失敗しました（"+e.message+"）"); setCRows([]); setCState("error"); console.warn("[OWNER'S] report 取得失敗:", e.message); }
+  }
+  // 「指定期間」を初めて開いた時だけ自動取得（既定の2週間で）。以降は「表示」ボタンで再取得。
+  useEffect(()=>{ if(isCustom && cState==="idle") loadReport(); },[period]);
+
+  const metaMap = useMemo(()=>{ const m={}; (data.creatives||[]).forEach(c=>{m[c.adKey]=c;}); return m; },[data.creatives]);
+  // ▼選択期間の窓。集計期間(row.period)は同一シート内で一定なので先頭行から取る。
+  //   日次/7日間/累計/指定期間のいずれも同じ書式なので、この1本で4モードすべてに対応できる。
+  const afWindow = useMemo(()=> parsePeriod(rows[0] && rows[0].period), [rows]);
+  // ▼3段ファネルの日別内訳(adFunnel.daily)を、その窓で広告キー別に合計する。
+  //   date は "yyyy-MM-dd" 固定なので文字列比較がそのまま日付比較になる（json_api 側で正規化済み）。
+  //   参考行(refRows)は他チーム分なので daily には元々含まれない。
+  const afMap = useMemo(()=>{
+    const m={};
+    if(!afWindow) return m;
+    ((adFunnel&&adFunnel.daily)||[]).forEach(d=>{
+      if(!d || !d.date || !d.adKey) return;
+      if(d.date < afWindow.since || d.date > afWindow.until) return;
+      m[d.adKey]=(m[d.adKey]||0)+(Number(d.friendAdd)||0);
+    });
+    return m;
+  },[adFunnel, afWindow]);
+  // ▼日別内訳が使えるか（未取得・期間解釈不能なら件数は「—」にする）
+  const afReady = !!(afWindow && adFunnel && adFunnel.daily);
+  // ▼選択期間が cid 記録開始日より前を含むか（ヘッダー注記の出し分け）
+  const afNeedNote = !!(afWindow && afWindow.since < AF_SINCE);
+  const enriched = useMemo(()=> rows.map(r=>{
+    const meta=metaMap[r.adKey]||{};
+    return { row:Object.assign({}, r, {status: r.status || meta.status || ""}), meta };
+  }),[rows,metaMap]);
+  const view = useMemo(()=>{
+    let v=enriched.filter(x=> filter==="all" ? true : statusInfo(x.row.status).cls===filter);
+    v=[...v];
+    if(sort==="status") v.sort((a,b)=>statusRank(a.row.status)-statusRank(b.row.status));
+    else if(sort==="spend") v.sort((a,b)=>(N(b.row.spend)||0)-(N(a.row.spend)||0));
+    else if(sort==="date") v.sort((a,b)=>String((b.meta||{}).startDate||"").localeCompare(String((a.meta||{}).startDate||"")));
+    else if(sort==="startOld") v.sort((a,b)=>cmpInvalidLast(startKey(a.meta), startKey(b.meta), "asc") || String(a.row.adKey||"").localeCompare(String(b.row.adKey||"")));
+    else if(sort==="score") v.sort((a,b)=>cmpInvalidLast(scoreKey(a.row.score), scoreKey(b.row.score), "desc"));
+    else if(PRICE_SORTS.indexOf(sort)>=0) v.sort((a,b)=>cmpInvalidLast(priceKey(a.row[sort]), priceKey(b.row[sort]), "asc"));
+    return v;
+  },[enriched,filter,sort]);
+  // ▼広告ID検索（3タブ共有）：既存フィルタ・ソートの後段で adKey 部分一致に絞る
+  const nq = normAdKey(adQ);
+  const shown = useMemo(()=> nq? view.filter(x=>adKeyHit(x.row.adKey, nq)) : view, [view, nq]);
+
+  // ▼タグ絞り込み（パイプライン4段目）：ステータス→並替→広告ID検索の後段。
+  //   複数タグは「いずれかを含む（OR）」、他のフィルタとはANDで重なる。集計値には手を加えない（表示の絞り込みのみ）。
+  //   集計・書き込みは useTagStore（3タブ共通）。selTags は App 保持＝3タブで共有・連動。
+  const tagStore = useTagStore(tagData, setTagData);
+  const {tagsByAd, allTagNames, addTag, removeTag} = tagStore;
+  const tagFiltered = useMemo(()=> selTags.length? shown.filter(x=>{
+    const mine=tagsByAd[x.row.adKey]||[];
+    return selTags.some(t=>mine.indexOf(t)>=0);
+  }) : shown, [shown, selTags, tagsByAd]);
+
+  let body;
+  if(isCustom && (cState==="loading"||cState==="idle")){
+    body = <div className="loadwrap"><div className="spin"></div>指定期間のデータを集計中…</div>;
+  } else if(isCustom && cState==="error"){
+    body = <div className="empty">{cErr||"取得に失敗しました"}<button className="reload" style={{marginLeft:8}} onClick={loadReport}>↻ 再試行</button></div>;
+  } else {
+    body = tagFiltered.length? (
+      <div className="cgrid">
+        {tagFiltered.map((x,i)=><FunnelCard key={x.row.adKey+i} row={x.row} meta={x.meta} targets={targets} isDaily={isDaily} period={period} afCount={afReady ? (afMap[x.row.adKey]||0) : null}
+          tagList={tagsByAd[x.row.adKey]||[]} allTagNames={allTagNames} onTagAdd={addTag} onTagRemove={removeTag} />)}
+      </div>
+    ):<div className="empty">{nq? "該当する広告IDがありません" : (selTags.length? "選択したタグが付いたクリエイティブはありません" : "該当するクリエイティブはありません")}</div>;
+  }
+
+  return (
+    <div>
+      <div className="row-controls">
+        <div className="seg">
+          {["daily","weekly","cumulative","custom"].map(p=>(
+            <button key={p} className={period===p?"active":""} onClick={()=>setPeriod(p)}>{labels[p]}</button>
+          ))}
+        </div>
+        {isCustom? (
+          <div className="dz">
+            <input type="date" value={cSince} max={cUntil} onChange={e=>setCSince(e.target.value)} />
+            <span className="dz-sep">〜</span>
+            <input type="date" value={cUntil} min={cSince} onChange={e=>setCUntil(e.target.value)} />
+            <button className="dz-go" onClick={loadReport}>表示</button>
+          </div>
+        ):null}
+        <select value={filter} onChange={e=>setFilter(e.target.value)}>
+          <option value="all">全ステータス</option>
+          <option value="on">配信中</option>
+          <option value="off">停止中</option>
+          <option value="ng">配信不可</option>
+        </select>
+        <select value={sort} onChange={e=>setSort(e.target.value)}>
+          <option value="status">並替：ステータス順</option>
+          <option value="spend">並替：消化金額が多い順</option>
+          <option value="date">並替：配信開始が新しい順</option>
+          <option value="startOld">並替：配信開始が古い順</option>
+          <option value="score">並替：スコアが高い順</option>
+          <option value="cpa">並替：CPAが安い順</option>
+          <option value="day1Cpa">並替：Day1単価が安い順</option>
+          <option value="finishCpa">並替：完走単価が安い順</option>
+          <option value="consultCpa">並替：説明会申込単価が安い順</option>
+          <option value="closeCpa">並替：成約単価が安い順</option>
+        </select>
+        <span className="count">{(nq||selTags.length)? (tagFiltered.length+"件 / 全"+view.length+"件") : (view.length+"件（"+labels[period]+"）")}</span>
+      </div>
+      <div className="tagbar-wrap">
+        <AdKeySearch q={adQ} setQ={setAdQ} />
+        <TagBar store={tagStore} selTags={selTags} setSelTags={setSelTags} tagState={tagState} onTagRetry={onTagRetry} />
+      </div>
+      {isCustom? (
+        <div className="cohort-note">※選択期間に<b>友だち追加された人</b>のファネル到達状況（成約日ではなく<b>友だち追加日</b>で集計するコホート方式）。消化金額のみ実際の消化日ベース。</div>
+      ):null}
+      {afNeedNote? (
+        <div className="cohort-note">※<b>LINE追加</b>は広告ID記録を開始した <b>{AF_SINCE}</b> 以降のみ集計しています。選択期間にそれ以前が含まれるため、LINE追加は実際より少なく（単価は高く）表示されます。<b>Day1提出以降の数値は期間全体</b>を集計しています。</div>
+      ):null}
+      {body}
+    </div>
+  );
+}
+
+/* ============================================================
+   ③ 7日間履歴（期間アコーディオン・グラフなし）
+============================================================ */
+function Accordion({title, sub, defaultOpen, children}){
+  const [open,setOpen]=useState(!!defaultOpen);
+  return (
+    <div className="acc">
+      <button className={"acc-head"+(open?" open":"")} onClick={()=>setOpen(o=>!o)}>
+        <span className="acc-ic"><Icon name="calendar-range" size={17} /></span>
+        <span className="acc-title">{title}</span>
+        <span className="acc-sub">{sub}</span>
+        <span className="acc-chev"><Icon name={open?"chevron-up":"chevron-down"} size={18} /></span>
+      </button>
+      {open? <div className="acc-body">{children}</div>:null}
+    </div>
+  );
+}
+
+function History({history, summary}){
+  const rows = history.history||[];
+  const targets = (summary && summary.targets) || {};
+  const metaMap = useMemo(()=>{ const m={}; ((summary&&summary.creatives)||[]).forEach(c=>{m[c.adKey]=c;}); return m; },[summary]);
+  // period（新しい順）でグループ化
+  const periods = useMemo(()=>{
+    const by={};
+    rows.forEach(r=>{ (by[r.period]||(by[r.period]=[])).push(r); });
+    return Object.keys(by).sort((a,b)=>String(b).localeCompare(String(a)))
+      .map(p=>({period:p, rows:by[p]}));
+  },[rows]);
+
+  if(!rows.length) return <div className="empty">履歴データがありません</div>;
+
+  return (
+    <div>
+      <div className="meta-line">期間別の週次推移（{periods.length}期間 / {history.historyLastUpdated||"-"} 時点）。タブを開くと、その期間のクリエイティブ別の数字が一覧で表示されます。</div>
+      {periods.map((g,gi)=>(
+        <Accordion key={g.period} title={g.period} sub={g.rows.length+" クリエイティブ"} defaultOpen={false}>
+          <div className="htbl-wrap">
+            <table className="htbl">
+              <thead>
+                <tr>
+                  <th>クリエイティブ</th><th>状態</th><th>消化金額</th><th>オプト</th><th>CPA</th>
+                  <th>Day1</th><th>Day1単価</th><th>完走</th><th>完走単価</th>
+                  <th>説明会</th><th>説申単価</th><th>成約</th><th>成約単価</th>
+                  <th>Light</th><th>Prem</th><th>Black</th><th>セルフ</th><th>サロン</th>
+                  <th>OWNER'S率</th><th>セルフ率</th><th>サロン率</th>
+                  <th>成約売上(総)</th><th>ROAS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {g.rows.map((r,i)=>{
+                  const meta=metaMap[r.adKey]||{};
+                  const si=statusInfo(r.status || meta.status || "");
+                  const avail=planAvailable(r);
+                  return (
+                    <tr key={i}>
+                      <td className="hkcell"><div className="hkflex"><Thumb src={r.image || meta.image} size={36} /><span>{r.adKey}</span></div></td>
+                      <td><span className={"pill "+si.cls}>{si.label}</span></td>
+                      <td className="num">{yen0(r.spend)}</td>
+                      <td className="num">{comma(r.opt)}</td>
+                      <td className={"num "+costClass(N(r.cpa),targets.cpa)}>{yen(r.cpa)}</td>
+                      <td className="num">{comma(r.day1)}</td>
+                      <td className={"num "+priceCls(N(r.day1Cpa),targets.day1)}>{priceVal(N(r.day1Cpa))}</td>
+                      <td className="num">{comma(r.finish)}</td>
+                      <td className={"num "+priceCls(N(r.finishCpa),targets.finish)}>{priceVal(N(r.finishCpa))}</td>
+                      <td className="num">{comma(r.consult)}</td>
+                      <td className={"num "+priceCls(N(r.consultCpa),targets.consult)}>{priceVal(N(r.consultCpa))}</td>
+                      <td className="num">{comma(r.close)}</td>
+                      <td className={"num "+priceCls(N(r.closeCpa),targets.close)}>{priceVal(N(r.closeCpa))}</td>
+                      <td className="num">{planCount(N(r.lightClose),avail)}</td>
+                      <td className="num">{planCount(N(r.premiumClose),avail)}</td>
+                      <td className="num">{planCount(N(r.blackClose),avail)}</td>
+                      <td className="num">{cntDash(N(r.selfstudyClose))}</td>
+                      <td className="num">{cntDash(N(r.salonClose))}</td>
+                      <td className="num">{rateStr(r.ownersCloseRate)}</td>
+                      <td className="num">{rateStr(r.selfstudyCloseRate)}</td>
+                      <td className="num">{rateStr(r.salonCloseRate)}</td>
+                      <td className="num">{yen0(totalRevenueOf(r))}</td>
+                      <td className={"num "+roasCls(r.roas,false)}>{roasPct(r.roas)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </Accordion>
+      ))}
+    </div>
+  );
+}
+
+/* ============================================================
+   ④ 検索
+============================================================ */
+function Search({data}){
+  const [q,setQ]=useState("");
+  const [status,setStatus]=useState("all");
+  const [target,setTarget]=useState("all");
+  const list=data.creatives||[];
+  const mt=useMemo(()=>metricMap(data.cumulative),[data.cumulative]);
+  const targets=useMemo(()=>{
+    const s=new Set();
+    list.forEach(c=>{ if(c.target) s.add(c.target); });
+    return Array.from(s);
+  },[list]);
+  const view=useMemo(()=>{
+    const kw=q.trim().toLowerCase();
+    return list.filter(c=>{
+      if(status!=="all" && statusInfo(c.status).cls!==status) return false;
+      if(target!=="all" && (c.target||"")!==target) return false;
+      if(kw){
+        const hay=((c.adKey||"")+" "+(c.title||"")+" "+(c.body||"")).toLowerCase();
+        if(hay.indexOf(kw)<0) return false;
+      }
+      return true;
+    });
+  },[list,q,status,target]);
+
+  return (
+    <div>
+      <div className="row-controls">
+        <div className="grow" style={{minWidth:"200px"}}>
+          <input type="text" placeholder="広告キー・タイトル・本文で検索…" value={q} onChange={e=>setQ(e.target.value)} />
+        </div>
+        <select value={status} onChange={e=>setStatus(e.target.value)}>
+          <option value="all">全ステータス</option>
+          <option value="on">配信中</option>
+          <option value="off">停止中</option>
+          <option value="ng">配信不可</option>
+        </select>
+        <select value={target} onChange={e=>setTarget(e.target.value)}>
+          <option value="all">全ターゲット</option>
+          {targets.map(t=><option key={t} value={t}>{t}</option>)}
+        </select>
+      </div>
+      <div className="meta-line">{view.length} 件ヒット{q?("（キーワード：「"+q+"」）"):""}</div>
+      {view.length? (
+        <div className="cgrid">
+          {view.map((c,i)=><CreativeCard key={c.adKey+i} c={c} mt={mt[c.adKey]} />)}
+        </div>
+      ):<div className="empty">条件に一致するクリエイティブはありません</div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   ④ 営業分析（type=sales × creatives台帳をマージ）
+============================================================ */
+// カード内：担当者別の内訳アコーディオン（デフォルト閉）
+function StaffBreakdown({list}){
+  const [open,setOpen]=useState(false);
+  const staff=(list||[]).filter(s=>N(s.applied)>0); // 申込0の担当者は非表示（表示のみ）
+  return (
+    <div className="pd">
+      <button className={"pd-head"+(open?" open":"")} onClick={()=>setOpen(o=>!o)}>
+        <span className="pd-ic"><Icon name="users" size={14} /></span>
+        <span className="pd-title">担当者別の内訳</span>
+        <span className="pd-cnt">（{staff.length}名）</span>
+        <span className="pd-chev"><Icon name={open?"chevron-up":"chevron-down"} size={16} /></span>
+      </button>
+      {open? (
+        <div className="pd-body" style={{display:"block"}}>
+          {staff.length? (
+            <div className="staff-list">
+              {staff.map((s,i)=>(
+                <div className="staff-row" key={i}>
+                  <div className="sr-top">
+                    <span className="sr-name" title={s.staff}>{s.staff||"（担当者なし）"}</span>
+                    <span className={"sr-rate "+salesRateCls(s.rate)}>成約率 {salesRate(s.rate,s.rateNum)}</span>
+                  </div>
+                  <div className="sr-stats">
+                    <em>申込 {cntDash(s.applied)}</em>
+                    <em>成約 {cntDash(s.close)}</em>
+                    <em>検討中 {cntDash(s.pending)}</em>
+                    <em>不成約 {cntDash(s.lose)}</em>
+                    <em className="j-muted">未開催 {cntDash(s.notHeld)}</em>
+                    <em>売上 {yen0(s.revenue)}</em>
+                  </div>
+                  {/* ▼v34 このクリエイティブ×この担当者の顧客明細（GAS v33R: byCreative[].byStaff[].details） */}
+                  <StaffDetails details={s.details} />
+                </div>
+              ))}
+            </div>
+          ):<div className="pd-empty">担当者データがありません</div>}
+        </div>
+      ):null}
+    </div>
+  );
+}
+
+/* ====== ボタンB（段階C-2）：上位層（説明会申込者）AI傾向分析 ====== */
+// 確定値の内訳テーブル（GAS集計値をそのまま表示。長文値は先頭90文字＋title属性に全文）
+function aibShort(v,n){ const s=String(v==null?"":v).trim(); return s.length>n? s.slice(0,n)+"…" : s; }
+function AiBStatTable({items}){
+  const list=(items||[]).filter(x=>x && String(x.value||"").trim());
+  if(!list.length) return <div className="ai-empty">該当なし</div>;
+  return (
+    <table className="aib-table"><tbody>
+      {list.map((it,i)=>(
+        <tr key={i}>
+          <td title={String(it.value)}>{aibShort(it.value,90)}</td>
+          <td className="aib-n">{comma(it.count)}名</td>
+        </tr>
+      ))}
+    </tbody></table>
+  );
+}
+// 分析結果（表パート＝確定値テーブル ＋ 自然文パート＝Claude）を整形表示
+function AiBResult({d, onRerun}){
+  const ai=d.analysis||{};
+  const st=d.stats||{};
+  const props=(ai.creative_proposals||[]).filter(p=>p && (p.headline || p.reason));
+  const price=ai.price_reaction!=null && String(ai.price_reaction).trim()? String(ai.price_reaction):"";
+  return (
+    <div className="ai-panel">
+      {ai.summary? <div className="ai-sum">{String(ai.summary)}</div>:null}
+      <div className="aib-meta">
+        対象：説明会申込 {comma(d.appliedCount)}名中、面談インサイトあり {comma(d.insightCount)}名
+        {d.truncated? "（うち上位・離脱の両端 "+comma(d.analyzedCount)+"名分をAI分析）":""}
+      </div>
+      <AiSection icon="handshake" title="成約ステータス内訳（確定値）"><AiBStatTable items={st.statuses} /></AiSection>
+      <AiSection icon="users" title="顧客タイプ（確定値）"><AiBStatTable items={st.customerTypes} /></AiSection>
+      <AiSection icon="wallet" title="価格反応（確定値）"><AiBStatTable items={st.priceReactions} /></AiSection>
+      <AiSection icon="target" title="共通する悩み・きっかけ"><AiList items={ai.common_pain} /></AiSection>
+      <AiSection icon="flame" title="響いたポイント"><AiList items={ai.resonate_points} /></AiSection>
+      <AiSection icon="wallet" title="価格反応の傾向（AI）">
+        {price? <div className="ai-budget">{price}</div>:<div className="ai-empty">該当なし</div>}
+      </AiSection>
+      <AiSection icon="trending-up" title="成約層と離脱層の違い"><AiList items={ai.deal_vs_drop} /></AiSection>
+      <AiSection icon="sparkles" title="この層に効く訴求案">
+        {props.length? (
+          <div className="ai-props">
+            {props.map((p,i)=>(
+              <div className="ai-prop" key={i}>
+                {p.headline? <div className="aph">{String(p.headline)}</div>:null}
+                {p.reason? <div className="apr">{String(p.reason)}</div>:null}
+              </div>
+            ))}
+          </div>
+        ):<div className="ai-empty">該当なし</div>}
+      </AiSection>
+      <button className="ai-btn" onClick={onRerun}><Icon name="sparkles" size={14} /> 再分析</button>
+    </div>
+  );
+}
+
+// クリエイティブ別 営業実績カード（画像・タイトルは台帳メタから）
+// ▼ボタンB（段階C-2）：上位層AI傾向分析を搭載（手動トリガー・押した時だけ ?type=analyzeB を叩く）
+function SalesCard({s, meta, consultCpa, cpaTarget, tagList, allTagNames, onTagAdd, onTagRemove}){
+  const img = (meta && meta.image) || "";
+  const [aiState,setAiState]=useState("idle"); // idle|loading|done|error
+  const [ai,setAi]=useState(null);
+  const [aiErr,setAiErr]=useState("");
+  async function runAnalyzeB(){
+    if(aiState==="loading") return;
+    setAiState("loading"); setAiErr("");
+    try{
+      const url=API+"?type=analyzeB&adKey="+encodeURIComponent(s.adKey)+"&_="+Date.now();
+      const raw=await jsonp(url, 90000); // GAS→外部シート読込→Anthropicで10〜40秒。コスト都合でリトライはしない
+      if(raw && raw.ok===false){ setAiErr(raw.error||"分析に失敗しました"); setAiState("error"); return; }
+      if(!raw || !raw.analysis || typeof raw.analysis!=="object"){ setAiErr("分析結果が空でした"); setAiState("error"); return; }
+      setAi(raw); setAiState("done");
+      console.log("%c[OWNER'S] type=analyzeB : ✅ "+s.adKey,"color:#6c4cf0;font-weight:bold");
+    }catch(e){ setAiErr("分析に失敗しました（"+e.message+"）"); setAiState("error"); console.warn("[OWNER'S] analyzeB 取得失敗:", e.message); }
+  }
+  return (
+    <div className="cc">
+      <KV src={img} alt={s.adKey} />
+      <div className="body">
+        <div className="ck">{s.adKey}</div>
+        {meta && meta.title? <div className="ctitle">{meta.title}</div>:null}
+
+        {onTagAdd? <TagRow adKey={s.adKey} tagList={tagList||[]} allTagNames={allTagNames||[]} onAdd={onTagAdd} onRemove={onTagRemove} /> : null}
+
+        {/* ▼説明会申込単価：クリエイティブ一覧タブと同一の値（消化金額÷説明会申込数）。値なし・申込0は「—」 */}
+        <div className="fm-top" style={{gridTemplateColumns:"1fr"}}>
+          <div className="fm-cell"><span>説明会申込単価</span><b className={priceCls(N(consultCpa),cpaTarget)}>{priceVal(N(consultCpa))}</b></div>
+        </div>
+
+        <div className="fm-top" style={{gridTemplateColumns:"repeat(2,1fr)"}}>
+          <div className="fm-cell"><span>説明会申込</span><b>{cntDash(s.applied)}名</b></div>
+          <div className="fm-cell"><span>売上</span><b>{yen0(s.revenue)}</b></div>
+        </div>
+
+        <div className="sc-states">
+          <div className="sc-state st-close"><div className="ssk">成約</div><div className="ssv">{cntDash(s.close)}</div></div>
+          <div className="sc-state st-pending"><div className="ssk">検討中</div><div className="ssv">{cntDash(s.pending)}</div></div>
+          <div className="sc-state st-lose"><div className="ssk">不成約</div><div className="ssv">{cntDash(s.lose)}</div></div>
+          <div className="sc-state st-nothd"><div className="ssk">未開催</div><div className="ssv">{cntDash(s.notHeld)}</div></div>
+        </div>
+
+        <div className="fm-top" style={{gridTemplateColumns:"1fr"}}>
+          <div className="fm-cell"><span>成約率</span><b className={salesRateCls(s.rate)}>{salesRate(s.rate,s.rateNum)}</b></div>
+        </div>
+
+        <StaffBreakdown list={s.byStaff} />
+
+        {aiState==="idle"? (
+          <button className="ai-btn" onClick={runAnalyzeB}><Icon name="sparkles" size={15} /> AI傾向分析（上位層）</button>
+        ):null}
+        {aiState==="loading"? (
+          <div className="ai-loading"><span className="ai-spin"></span>面談インサイトをAIが分析中…（10〜40秒）</div>
+        ):null}
+        {aiState==="error"? (
+          <div className="ai-err"><span>{aiErr}</span><button onClick={runAnalyzeB}>再試行</button></div>
+        ):null}
+        {aiState==="done" && ai? <AiBResult d={ai} onRerun={runAnalyzeB} />:null}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   課題回答ビューア（段階B）
+   - クリエイティブを画像付きカード一覧で表示 → クリックで選択
+   - 選択クリエイティブの回答者を stageLv 降順（ファネル後ろ優先）で表示
+   - 各人：LINE名 ＋ ステージバッジ ＋ Day1〜5回答（pre-wrap）
+   - hasAnswer=false（回答なし）は薄く表示
+============================================================ */
+function AnswerPerson({p}){
+  const days=[["Day1",p.day1Ans],["Day2",p.day2Ans],["Day3",p.day3Ans],["Day5",p.day5Ans]]
+    .filter(d=>String(d[1]||"").trim());
+  return (
+    <div className={"aperson"+(p.hasAnswer?"":" no-ans")}>
+      <div className="ap-head">
+        <span className="ap-name" title={p.lineName}>{p.lineName||"(名前なし)"}</span>
+        <span className={"pbadge "+stageBadgeCls(p.stage)}>{p.stage||"-"}</span>
+        {!p.hasAnswer? <span className="ap-noans">課題回答なし</span> : null}
+      </div>
+      {p.hasAnswer && days.length? (
+        <div className="ap-days">
+          {days.map((d,i)=>(
+            <div className="aday" key={i}>
+              <span className="aday-k">{d[0]}</span>
+              <div className="aday-v">{d[1]}</div>
+            </div>
+          ))}
+        </div>
+      ):null}
+    </div>
+  );
+}
+
+function AnswersViewer({answers, summary, state, onRetry, adQ, setAdQ, tagData, setTagData, tagState, onTagRetry, selTags, setSelTags}){
+  const [sel,setSel]=useState(null);
+  const metaMap=useMemo(()=>{ const m={}; ((summary&&summary.creatives)||[]).forEach(c=>{m[c.adKey]=c;}); return m; },[summary]);
+  const byCreative=(answers&&answers.byCreative)||{};
+  const cards=useMemo(()=> Object.keys(byCreative).map(adKey=>{
+    const list=byCreative[adKey]||[];
+    return { adKey, meta:metaMap[adKey]||{}, count:list.length, withAns:list.filter(p=>p.hasAnswer).length };
+  }).sort((a,b)=> (b.withAns-a.withAns) || (b.count-a.count)), [byCreative,metaMap]);
+  // ▼広告ID検索（3タブ共有）：一覧ビューのカードのみ絞り込み（選択後の個人回答ビューは対象外）
+  const nq = normAdKey(adQ);
+  const shown = useMemo(()=> nq? cards.filter(c=>adKeyHit(c.adKey, nq)) : cards, [cards, nq]);
+  // ▼タグ絞り込み（3タブ共有）：広告ID検索の後段。複数タグはOR、広告ID検索とはAND。
+  //   一覧ビューのみ対象（個人回答ビューは対象外。戻ってもselTagsはApp保持のため選択は維持される）。
+  const tagStore = useTagStore(tagData, setTagData);
+  const {tagsByAd, allTagNames, addTag, removeTag} = tagStore;
+  const tagFiltered = useMemo(()=> selTags.length? shown.filter(c=>{
+    const mine=tagsByAd[c.adKey]||[];
+    return selTags.some(t=>mine.indexOf(t)>=0);
+  }) : shown, [shown, selTags, tagsByAd]);
+  // ▼課題回答のみ：「＋タグ」プルダウン内に出す注記（タグは記録単位ではなくクリエイティブ単位である旨）
+  const TAG_NOTE_ANSWERS = "タグはクリエイティブ単位で保存されます。同じ広告IDの他の記録にも反映されます";
+
+  if(state==="loading" || (state==="idle")){
+    return <div className="loadwrap"><div className="spin"></div>課題回答を読み込み中…</div>;
+  }
+  if(state==="error"){
+    return <div className="empty">課題回答データの取得に失敗しました。<button className="reload" style={{marginLeft:8}} onClick={onRetry}>↻ 再試行</button></div>;
+  }
+
+  // ▼詳細：選択したクリエイティブの回答者一覧（stageLv降順のまま）
+  if(sel){
+    const list=byCreative[sel]||[];
+    const meta=metaMap[sel]||{};
+    const withAns=list.filter(p=>p.hasAnswer).length;
+    return (
+      <div>
+        <div className="av-selhead">
+          <button className="av-back" onClick={()=>setSel(null)}>← クリエイティブ一覧へ戻る</button>
+        </div>
+        <div className="av-selcard">
+          <KV src={meta.image||""} alt={sel} />
+          <div className="av-selmeta">
+            <div className="ck">{sel}</div>
+            {meta.title? <div className="ctitle">{meta.title}</div>:null}
+            <div className="acnt">{list.length}名（回答あり {withAns}名）・ファネル後ろ順（成約→…→Day1）</div>
+          </div>
+        </div>
+        {list.length? (
+          <div className="aplist">{list.map((p,i)=><AnswerPerson key={i} p={p} />)}</div>
+        ):<div className="empty">このクリエイティブの回答者はいません</div>}
+      </div>
+    );
+  }
+
+  // ▼一覧：クリエイティブ画像カード
+  //   カードは <button>→<div role="button"> へ変更（タグ操作ボタンを中に置くとボタン入れ子の不正HTMLになるため）。
+  //   Enter/Space で開けるキーボード操作と focus-visible リングは維持（.acard:focus-visible）。
+  //   タグ行は stopPropagation ラッパで包み、タグ操作でカードが開かないようにする。
+  return (
+    <div>
+      <div className="tagbar-wrap">
+        <AdKeySearch q={adQ} setQ={setAdQ} />
+        <TagBar store={tagStore} selTags={selTags} setSelTags={setSelTags} tagState={tagState} onTagRetry={onTagRetry} />
+      </div>
+      <div className="meta-line" style={{marginTop:0}}>
+        {(nq||selTags.length)? ("クリエイティブ "+tagFiltered.length+"件 / 全"+cards.length+"件") : ("クリエイティブ "+cards.length+"件")} / 回答者 {(answers&&answers.personCount)||0}名 — カードを選ぶとDay回答が見られます
+      </div>
+      {tagFiltered.length? (
+        <div className="agrid">
+          {tagFiltered.map(c=>(
+            <div className="acard" key={c.adKey} role="button" tabIndex={0}
+              onClick={()=>setSel(c.adKey)}
+              onKeyDown={e=>{ if(e.key==="Enter"||e.key===" "||e.key==="Spacebar"){ e.preventDefault(); setSel(c.adKey); } }}>
+              <KV src={c.meta.image||""} alt={c.adKey} />
+              <div className="abody">
+                <div className="ak">{c.adKey}</div>
+                {c.meta.title? <div className="atitle">{c.meta.title}</div>:null}
+                <div onClick={e=>e.stopPropagation()} onKeyDown={e=>e.stopPropagation()}>
+                  <TagRow adKey={c.adKey} tagList={tagsByAd[c.adKey]||[]} allTagNames={allTagNames} onAdd={addTag} onRemove={removeTag} note={TAG_NOTE_ANSWERS} />
+                </div>
+                <div className="acnt"><b>{c.count}</b>名（回答 {c.withAns}）</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ):<div className="empty">{nq? "該当する広告IDがありません" : (selTags.length? "該当するクリエイティブがありません" : "課題回答データがありません")}</div>}
+    </div>
+  );
+}
+
+/* ▼顧客明細テーブル（GAS v33R: byCreative[].byStaff[].details）。
+   ▼v34：表示先を「担当者別サマリー」から「クリエイティブ別カード内・担当者別の内訳」へ変更。
+   StaffBreakdown の各担当者行（集計の下）に置き、「そのクリエイティブ×その担当者」の明細を表示する。
+   RIDE/渡辺共用：どちらのAPIでも details が来ていれば表示する汎用実装。
+   details が空/未定義なら何も出さない（既存表示のみ。渡辺版GAS未対応の間も安全）。
+   並び順はAPIのまま（GAS側で面談日程昇順ソート済み）。
+   bg（H列背景色＝ステータス判定根拠）と src（WAC/代行屋）は画面に出さず、
+   行の title 属性（ホバーで面談日程・bg・srcを表示）と data-* 属性（DevTools確認用）にのみ保持。 */
+function dtStatusCls(st){
+  if(st==="成約") return "b-close";
+  if(st==="検討中") return "b-pending";
+  if(st==="不成約") return "b-lose";
+  return "b-nothd"; // 未開催・想定外値
+}
+function dtAmount(v){
+  if(typeof v==="number" && isFinite(v)) return "¥"+Math.round(v).toLocaleString("ja-JP"); // 数値→¥490,000形式
+  const s=String(v==null?"":v).trim();
+  return s? s : "—"; // テキスト→そのまま／空→ダッシュ
+}
+function StaffDetails({details}){
+  const [open,setOpen]=useState(false); // 明細が多い担当者（20件超等）を考慮し折りたたみ式（デフォルト閉）
+  const list=Array.isArray(details)? details : [];
+  if(!list.length) return null;
+  return (
+    <div className="sc-dt">
+      <button className="sc-dt-head" onClick={()=>setOpen(o=>!o)}>
+        <Icon name="file-text" size={13} />
+        明細を{open?"隠す":"表示"}<span className="cnt">（{list.length}件）</span>
+        <span className="chev"><Icon name={open?"chevron-up":"chevron-down"} size={14} /></span>
+      </button>
+      {open? (
+        <div className="sc-dt-body">
+          <table><tbody>
+            {list.map((d,i)=>(
+              <tr key={i}
+                  title={"面談日程: "+(d.date||"—")+" ／ 判定根拠(H列背景色): "+(d.bg||"—")+" ／ 出所: "+(d.src||"—")}
+                  data-bg={d.bg||""} data-src={d.src||""} data-date={d.date||""}>
+                <td className="dt-name" title={d.name||""}>{d.name||"—"}</td>
+                <td><span className={"dt-badge "+dtStatusCls(d.status)}>{d.status||"—"}</span></td>
+                <td className="dt-amt">{dtAmount(d.amount)}</td>
+              </tr>
+            ))}
+          </tbody></table>
+        </div>
+      ):null}
+    </div>
+  );
+}
+
+function SalesAnalysis({sales, summary, adQ, setAdQ, tagData, setTagData, tagState, onTagRetry, selTags, setSelTags}){
+  const data = sales || {};
+  const byCreative = data.byCreative || [];
+  const byStaff = (data.byStaff || []).filter(s=>N(s.applied)>0); // 申込0の担当者は非表示（表示のみ）
+  const unknownCount = N(data.unknownCount) || 0;
+  const metaMap = useMemo(()=>{ const m={}; ((summary&&summary.creatives)||[]).forEach(c=>{m[c.adKey]=c;}); return m; },[summary]);
+  // ▼説明会申込単価：クリエイティブ一覧タブと同一値（summaryの累計行 consult=消化金額÷申込数 をGASが算出済み）を
+  //   adKeyで突き合わせて表示する。大文字小文字の取りこぼし対策で小文字キーもフォールバック登録。
+  const cpaTarget = (summary && summary.targets && summary.targets.consult) || null;
+  const consultCpaMap = useMemo(()=>{
+    const m={};
+    ((summary && summary.cumulative)||[]).forEach(r=>{
+      const k=r.adKey; if(k==null || k==="") return;
+      const v=N(r.consultCpa);
+      const ks=String(k);
+      if(!(ks in m)) m[ks]=v;
+      const kl=ks.toLowerCase();
+      if(!(kl in m)) m[kl]=v;
+    });
+    return m;
+  },[summary]);
+  const consultCpaOf = (adKey)=>{
+    if(adKey==null) return null;
+    const ks=String(adKey);
+    if(ks in consultCpaMap) return consultCpaMap[ks];
+    const kl=ks.toLowerCase();
+    if(kl in consultCpaMap) return consultCpaMap[kl];
+    return null;
+  };
+  const cards = useMemo(()=> byCreative.filter(c=>!isUnknownAdKey(c.adKey)), [byCreative]);
+  // ▼広告ID検索（3タブ共有）：クリエイティブ別カードのみ絞り込み（担当者別サマリーはadKeyを持たないため対象外）
+  const nq = normAdKey(adQ);
+  const shown = useMemo(()=> nq? cards.filter(c=>adKeyHit(c.adKey, nq)) : cards, [cards, nq]);
+  // ▼タグ絞り込み（3タブ共有）：広告ID検索の後段。複数タグはOR、ステータス系・広告ID検索とはAND。
+  //   クリエイティブ別カードのみ対象（担当者別サマリーは広告ID検索と同様に対象外）。集計値には手を加えない。
+  const tagStore = useTagStore(tagData, setTagData);
+  const {tagsByAd, allTagNames, addTag, removeTag} = tagStore;
+  const tagFiltered = useMemo(()=> selTags.length? shown.filter(c=>{
+    const mine=tagsByAd[c.adKey]||[];
+    return selTags.some(t=>mine.indexOf(t)>=0);
+  }) : shown, [shown, selTags, tagsByAd]);
+
+  if(!byCreative.length && !byStaff.length){
+    return <div className="empty">営業データがありません</div>;
+  }
+
+  return (
+    <div>
+      {byStaff.length? (
+        <div>
+          <div className="sec-title">担当者別サマリー（全体）</div>
+          <div className="sales-summary">
+            {byStaff.map((s,i)=>(
+              <div className="staff-chip" key={i}>
+                <div className="sc-name"><Icon name="user-plus" size={14} />{s.staff||"（担当者なし）"}</div>
+                <div className="sc-stats">
+                  <em>申込 {cntDash(s.applied)}</em>
+                  <em>成約 {cntDash(s.close)}</em>
+                  <em>検討中 {cntDash(s.pending)}</em>
+                  <em>不成約 {cntDash(s.lose)}</em>
+                  <em className="j-muted">未開催 {cntDash(s.notHeld)}</em>
+                  <em className={salesRateCls(s.rate)}>成約率 {salesRate(s.rate,s.rateNum)}</em>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ):null}
+
+      {unknownCount && !nq && !selTags.length? (
+        <div className="sales-note">
+          <Icon name="triangle-alert" size={15} />
+          広告外経由（オーガニック等）：{comma(unknownCount)} 件　※広告キー不明のため、クリエイティブ別カードには含めていません
+        </div>
+      ):null}
+
+      <div className="tagbar-wrap">
+        <AdKeySearch q={adQ} setQ={setAdQ} />
+        <TagBar store={tagStore} selTags={selTags} setSelTags={setSelTags} tagState={tagState} onTagRetry={onTagRetry} />
+      </div>
+      <div className="sec-title">クリエイティブ別 営業実績（{(nq||selTags.length)? (tagFiltered.length+"件 / 全"+cards.length+"件") : (cards.length+"件")}）</div>
+      {tagFiltered.length? (
+        <div className="cgrid">
+          {tagFiltered.map((c,i)=><SalesCard key={(c.adKey||"")+i} s={c} meta={metaMap[c.adKey]} consultCpa={consultCpaOf(c.adKey)} cpaTarget={cpaTarget}
+            tagList={tagsByAd[c.adKey]||[]} allTagNames={allTagNames} onTagAdd={addTag} onTagRemove={removeTag} />)}
+        </div>
+      ):<div className="empty">{nq? "該当する広告IDがありません" : (selTags.length? "該当するクリエイティブがありません" : "クリエイティブ別の営業データがありません")}</div>}
+    </div>
+  );
+}
+
+/* ============================================================
+   データソースバッジ
+============================================================ */
+function SourceBadge({source}){
+  const live = source.summary && source.history;
+  const partial = (source.summary || source.history) && !live;
+  let cls, label;
+  if(live){ cls="live"; label="実データ取得：成功"; }
+  else if(partial){ cls="partial"; label="一部ダミー使用中"; }
+  else { cls="dummy"; label="ダミー使用中"; }
+  return <span className={"srcbadge "+cls}><span className="srcdot"></span>{label}</span>;
+}
+
+/* ============================================================
+   ルート App（左サイドバー構成）
+============================================================ */
+/* ============================================================
+   テスト予定タブ（広告テスト案の登録・編集・削除・並び替え）
+   認証なし：閲覧・書き込みともキー不要（ツールにアクセスできる人は誰でも編集可）。
+============================================================ */
+const TP_STATUSES=["未着手","実施中","完了","見送り"];
+const TP_BADGE={"未着手":"st-todo","実施中":"st-doing","完了":"st-done","見送り":"st-skip"};
+
+function TestPlanEditModal({item,busy,onSave,onCancel}){
+  const [f,setF]=useState({
+    status:item?item.status:"未着手", title:item?item.title:"", category:item?item.category:"",
+    hypothesis:item?item.hypothesis:"", creativePlan:item?item.creativePlan:"", owner:item?item.owner:"",
+    adKeys:item?item.adKeys:"", memo:item?item.memo:"",
+  });
+  const [err,setErr]=useState("");
+  const set=(k,v)=>setF(p=>({...p,[k]:v}));
+  function submit(){
+    if(!f.title.trim()){ setErr("テスト名は必須です"); return; }
+    setErr("");
+    onSave({...f, title:f.title.trim()});
+  }
+  return (
+    <div className="tp-overlay" onClick={busy?null:onCancel}>
+      <div className="tp-modal" onClick={e=>e.stopPropagation()}>
+        <h3>{item? "テスト案を編集" : "テスト案を追加"}</h3>
+        <div className="tp-form">
+          {err? <div className="tp-form-err">{err}</div> : null}
+          <div className="tp-field"><label>テスト名 <span className="tp-req">※必須</span></label>
+            <input type="text" value={f.title} onChange={e=>set("title",e.target.value)} placeholder="例：趣味系LPの新訴求テスト" /></div>
+          <div className="tp-field"><label>ステータス</label>
+            <select value={f.status} onChange={e=>set("status",e.target.value)}>{TP_STATUSES.map(s=><option key={s} value={s}>{s}</option>)}</select></div>
+          <div className="tp-field"><label>カテゴリ</label>
+            <input type="text" value={f.category} onChange={e=>set("category",e.target.value)} placeholder="例：趣味系" /></div>
+          <div className="tp-field"><label>狙い・仮説</label>
+            <textarea value={f.hypothesis} onChange={e=>set("hypothesis",e.target.value)} /></div>
+          <div className="tp-field"><label>作るクリエイティブの内容</label>
+            <textarea value={f.creativePlan} onChange={e=>set("creativePlan",e.target.value)} /></div>
+          <div className="tp-field"><label>担当</label>
+            <input type="text" value={f.owner} onChange={e=>set("owner",e.target.value)} /></div>
+          <div className="tp-field"><label>広告ID（実施後に紐づけ・カンマ区切り）</label>
+            <input type="text" value={f.adKeys} onChange={e=>set("adKeys",e.target.value)} placeholder="例：k1-setladys2-ad0020-1f, k1-setladys2-ad0021-2f" /></div>
+          <div className="tp-field"><label>メモ</label>
+            <textarea value={f.memo} onChange={e=>set("memo",e.target.value)} /></div>
+        </div>
+        <div className="tp-modal-foot">
+          <button className="tp-cancel" onClick={onCancel} disabled={busy}>キャンセル</button>
+          <button className="tp-save" onClick={submit} disabled={busy}>{busy? "保存中…" : "保存"}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TestPlan(){
+  const [items,setItems]=useState(null);        // 全件（order昇順）
+  const [state,setState]=useState("loading");   // loading|done|error
+  const [showClosed,setShowClosed]=useState(false);
+  const [expanded,setExpanded]=useState({});    // id→true：仮説の全文表示
+  const [msg,setMsg]=useState(null);            // {text, kind:"info"|"ok"|"err"}
+  const [modal,setModal]=useState(null);        // null | {item:null(新規)|編集対象}
+  const [modalBusy,setModalBusy]=useState(false);
+  const [dragId,setDragId]=useState(null);
+  const [overId,setOverId]=useState(null);
+  const msgTimer=useRef(null);
+
+  function flashMsg(text,kind){
+    setMsg({text,kind});
+    if(msgTimer.current) clearTimeout(msgTimer.current);
+    if(kind!=="err") msgTimer.current=setTimeout(()=>setMsg(null), 2500);
+  }
+
+  async function load(){
+    setState("loading");
+    try{
+      const raw=await jsonpRetry(URL_TESTPLAN + "&_=" + Date.now(), 2, 28000);
+      setItems((raw&&raw.testPlans)||[]);
+      setState("done");
+    }catch(e){
+      console.warn("[OWNER'S] testplan 取得失敗:", e.message);
+      setState("error");
+    }
+  }
+  useEffect(()=>{ load(); },[]);
+
+  // 書き込み共通：認証なし（キー入力・キー送信なし）。通信エラーは ok:false に変換して返す
+  async function write(body){
+    try{
+      return await postTestPlanWrite(body);
+    }catch(e){
+      console.warn("[OWNER'S] testplan 書き込み失敗:", e.message);
+      return { ok:false, error:"通信に失敗しました" };
+    }
+  }
+
+  async function saveItem(fields){
+    setModalBusy(true);
+    const editing=modal&&modal.item;
+    let res=null;
+    try{
+      res=await write(editing? {action:"update",id:editing.id,...fields} : {action:"add",...fields});
+    }finally{
+      setModalBusy(false);
+    }
+    if(!res||!res.ok){ flashMsg("保存に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; } // モーダル維持＝入力内容保持
+    setModal(null);
+    flashMsg("保存しました","ok");
+    await load();
+  }
+
+  async function removeItem(it){
+    if(!window.confirm("このテスト案を削除しますか？\n「"+it.title+"」")) return;
+    flashMsg("保存中…","info");
+    const res=await write({action:"delete",id:it.id});
+    if(!res||!res.ok){ flashMsg("削除に失敗しました："+((res&&res.error)||"不明なエラー"),"err"); return; }
+    flashMsg("保存しました","ok");
+    await load();
+  }
+
+  // D&D並び替え：確定時に全件のorderを一括保存。失敗時は元の並びへロールバック
+  async function persistOrder(next){
+    const prev=items;
+    setItems(next);
+    flashMsg("保存中…","info");
+    const res=await write({action:"reorder",orders:next.map((it,i)=>({id:it.id,order:i+1}))});
+    if(!res||!res.ok){
+      setItems(prev);
+      flashMsg("並び替えの保存に失敗しました。元の並びに戻しました","err");
+      return;
+    }
+    flashMsg("保存しました","ok");
+  }
+  function handleDrop(targetId){
+    if(dragId==null||dragId===targetId){ setDragId(null); setOverId(null); return; }
+    const list=items.slice();
+    const from=list.findIndex(x=>x.id===dragId);
+    const to=list.findIndex(x=>x.id===targetId);
+    setDragId(null); setOverId(null);
+    if(from<0||to<0) return;
+    const moved=list.splice(from,1)[0];
+    list.splice(to,0,moved);
+    persistOrder(list);
+  }
+
+  const visible=(items||[]).filter(it=> showClosed ? true : (it.status==="未着手"||it.status==="実施中"));
+
+  if(state==="loading") return <div className="loadwrap"><div className="spin"></div>テスト予定を読み込み中…</div>;
+  if(state==="error") return <div className="empty">テスト予定の取得に失敗しました。<button className="reload" style={{marginLeft:8}} onClick={load}>↻ 再試行</button></div>;
+
+  return (
+    <div>
+      <div className="tp-toolbar">
+        <button className="tp-add" onClick={()=>setModal({item:null})}>＋ テスト案を追加</button>
+        <label className="tp-toggle">
+          <input type="checkbox" checked={showClosed} onChange={e=>setShowClosed(e.target.checked)} />
+          完了・見送りも表示
+        </label>
+        {msg? <span className={"tp-msg"+(msg.kind==="ok"?" ok":msg.kind==="err"?" err":"")}>{msg.text}</span> : null}
+      </div>
+      {visible.length===0 ? (
+        <div className="empty">{(items||[]).length===0? "テスト予定がまだ登録されていません" : "表示できるテスト案がありません（「完了・見送りも表示」で確認できます）"}</div>
+      ):(
+        <div className="tp-list">
+          {visible.map(it=>(
+            <div key={it.id}
+              className={"tp-card"+(dragId===it.id?" dragging":"")+(overId===it.id&&dragId!==it.id?" dragover":"")}
+              draggable
+              onDragStart={e=>{ setDragId(it.id); e.dataTransfer.effectAllowed="move"; try{ e.dataTransfer.setData("text/plain",it.id); }catch(err){} }}
+              onDragEnd={()=>{ setDragId(null); setOverId(null); }}
+              onDragOver={e=>{ e.preventDefault(); e.dataTransfer.dropEffect="move"; if(overId!==it.id) setOverId(it.id); }}
+              onDragLeave={()=>{ if(overId===it.id) setOverId(null); }}
+              onDrop={e=>{ e.preventDefault(); handleDrop(it.id); }}>
+              <span className="tp-grip" title="ドラッグで並び替え">⠿</span>
+              <div className="tp-body">
+                <div className="tp-head">
+                  <span className={"tp-badge "+(TP_BADGE[it.status]||"st-todo")}>{it.status}</span>
+                  <span className="tp-title">{it.title}</span>
+                </div>
+                <div className="tp-meta">
+                  {it.category? <span>カテゴリ：{it.category}</span> : null}
+                  {it.owner? <span>担当：{it.owner}</span> : null}
+                  {it.adKeys? <span>広告ID：{it.adKeys}</span> : null}
+                </div>
+                {it.hypothesis? (
+                  <div className="tp-hypo" title="クリックで全文表示/折りたたみ"
+                    onClick={()=>setExpanded(p=>({...p,[it.id]:!p[it.id]}))}>
+                    {expanded[it.id]||it.hypothesis.length<=60 ? it.hypothesis : it.hypothesis.slice(0,60)+"…"}
+                  </div>
+                ):null}
+              </div>
+              <div className="tp-actions">
+                <button className="tp-btn" onClick={()=>setModal({item:it})}>編集</button>
+                <button className="tp-btn danger" onClick={()=>removeItem(it)}>削除</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {modal? <TestPlanEditModal item={modal.item} busy={modalBusy} onSave={saveItem} onCancel={()=>{ if(!modalBusy) setModal(null); }} /> : null}
+    </div>
+  );
+}
+
+const TABS=[
+  {id:"dash", icon:"layout-dashboard", label:"ダッシュボード"},
+  {id:"crea", icon:"images", label:"クリエイティブ一覧"},
+  {id:"answers", icon:"file-text", label:"課題回答"},
+  {id:"testplan", icon:"calendar-check", label:"テスト予定"},
+  {id:"sales", icon:"handshake", label:"営業分析"},
+  {id:"hist", icon:"line-chart", label:"7日間履歴"},
+  {id:"search", icon:"search", label:"検索"},
+];
+
+function App(){
+  const [tab,setTab]=useState("dash");
+  const [summary,setSummary]=useState(null);
+  const [history,setHistory]=useState(null);
+  const [sales,setSales]=useState(null);
+  const [answers,setAnswers]=useState(null);
+  const [answersState,setAnswersState]=useState("idle"); // 課題回答の遅延取得状態 idle|loading|done|error
+  const [loading,setLoading]=useState(true);
+  const [warn,setWarn]=useState("");
+  const [showWarn,setShowWarn]=useState(true);
+  const [source,setSource]=useState({summary:false, history:false, sales:false});
+  const [running,setRunning]=useState(false); // 手動更新（updateAll）実行中
+  const [runMsg,setRunMsg]=useState("");       // 手動更新の失敗メッセージ
+  // ▼広告ID検索語（クリエイティブ一覧・課題回答・営業分析の3タブで共有。タブ切替でも維持、×で3タブ同時解除）
+  const [adQuery,setAdQuery]=useState("");
+  // ▼タグ紐づけ（クリエイティブ一覧・営業分析・課題回答の3タブ共有。App保持＝タブ切替でも再取得不要。
+  //   書き込みは各タブの useTagStore 経由で楽観更新→どのタブで変更しても3タブに即反映）
+  const [tagData,setTagData]=useState(null);
+  const [tagState,setTagState]=useState("idle"); // idle|loading|done|error
+  // ▼3段ファネル（クリエイティブ一覧カードの「LINE追加」行用。遅延取得＝crea タブを開いた時だけ）
+  const [adFunnel,setAdFunnel]=useState(null);
+  const [adFunnelState,setAdFunnelState]=useState("idle"); // idle|loading|done|error
+  // ▼選択中タグ（3タブ共有。タブ切替でも維持、解除すると3タブ同時解除。adQueryと同じ設計）
+  const [selTags,setSelTags]=useState([]);
+  // リネーム・削除で存在しなくなったタグは選択から自動で外す（変化が無ければ状態は更新しない）
+  useEffect(()=>{
+    setSelTags(p=>{
+      const names={}; (tagData||[]).forEach(t=>{ names[t.tagName]=true; });
+      const n=p.filter(t=>names[t]);
+      return n.length===p.length? p : n;
+    });
+  },[tagData]);
+
+  async function load(){
+    setLoading(true); setWarn(""); setShowWarn(true);
+    let s=null,h=null,sa=null,sLive=false,hLive=false,saLive=false;
+    try{ s=await jsonpRetry(URL_SUMMARY, 2, 28000); sLive=true; }catch(e){ s=DUMMY_SUMMARY; console.warn("[OWNER'S] summary 取得失敗:", e.message); }
+    try{ h=await jsonpRetry(URL_HISTORY, 2, 28000); hLive=true; }catch(e){ h=DUMMY_HISTORY; console.warn("[OWNER'S] history 取得失敗:", e.message); }
+    try{ const raw=await jsonpRetry(URL_SALES, 2, 28000); sa=(raw&&raw.sales)?raw.sales:raw; saLive=true; }catch(e){ sa=DUMMY_SALES.sales; console.warn("[OWNER'S] sales 取得失敗:", e.message); }
+    console.log("%c[OWNER'S] type=summary : "+(sLive?"✅ 実データ取得 成功":"⚠️ 失敗→ダミー使用"),"color:"+(sLive?"#16a34a":"#c2820b")+";font-weight:bold");
+    console.log("%c[OWNER'S] type=history : "+(hLive?"✅ 実データ取得 成功":"⚠️ 失敗→ダミー使用"),"color:"+(hLive?"#16a34a":"#c2820b")+";font-weight:bold");
+    console.log("%c[OWNER'S] type=sales   : "+(saLive?"✅ 実データ取得 成功":"⚠️ 失敗→ダミー使用"),"color:"+(saLive?"#16a34a":"#c2820b")+";font-weight:bold");
+    setSummary(s); setHistory(h); setSales(sa); setSource({summary:sLive, history:hLive, sales:saLive});
+    if(!sLive || !hLive){
+      setWarn((!sLive && !hLive)
+        ? "実データの取得に失敗したため、サンプル（ダミー）データを表示しています。"
+        : "一部データの取得に失敗したため、その部分はサンプル（ダミー）を表示しています。");
+    }
+    setLoading(false);
+  }
+
+  // 手動更新：GASの updateAll() を実行 → 完了後に最新データを再取得
+  async function runUpdate(){
+    if(running) return;
+    setRunning(true); setRunMsg("");
+    try{
+      const res = await jsonp(URL_RUN, 240000); // updateAll 実行（最大4分待つ）
+      if(!res || res.ran!==true) throw new Error("run NG");
+      await load(); // 完了後に type=summary / type=history を再取得（画面・最終更新を更新）
+    }catch(e){
+      console.warn("[OWNER'S] 手動更新 失敗:", e.message);
+      setRunMsg("更新に失敗しました。もう一度お試しください。");
+    }finally{
+      setRunning(false);
+    }
+  }
+
+  // ▼段階B：課題回答（遅延取得：「課題回答」タブを初めて開いた時だけ fetch。summaryは重くしない）
+  async function loadAnswers(){
+    if(answersState==="loading"||answersState==="done") return;
+    setAnswersState("loading");
+    try{
+      const raw=await jsonpRetry(URL_ANSWERS + "&_=" + Date.now(), 2, 28000); // 再デプロイを確実に拾うキャッシュバスター
+      const a=(raw&&raw.answers)?raw.answers:raw;
+      setAnswers(a||{byCreative:{},personCount:0}); setAnswersState("done");
+      console.log("%c[OWNER'S] type=answers : ✅ 実データ取得 成功","color:#16a34a;font-weight:bold");
+    }catch(e){
+      setAnswers({byCreative:{},personCount:0}); setAnswersState("error");
+      console.warn("[OWNER'S] answers 取得失敗:", e.message);
+    }
+  }
+  useEffect(()=>{ if(tab==="answers") loadAnswers(); },[tab]);
+
+  // ▼タグ（遅延取得：クリエイティブ一覧・営業分析・課題回答のいずれかを初めて開いた時に1回だけ fetch。
+  //   loading/doneガードで二重取得を防止。summaryは重くしない。失敗時は再試行可）
+  async function loadTags(){
+    if(tagState==="loading"||tagState==="done") return;
+    setTagState("loading");
+    try{
+      const raw=await jsonpRetry(URL_TAGS + "&_=" + Date.now(), 2, 28000); // 再デプロイを確実に拾うキャッシュバスター
+      setTagData((raw&&raw.tags)||[]); setTagState("done");
+      console.log("%c[OWNER'S] type=tags : ✅ 実データ取得 成功","color:#16a34a;font-weight:bold");
+    }catch(e){
+      setTagData([]); setTagState("error");
+      console.warn("[OWNER'S] tags 取得失敗:", e.message);
+    }
+  }
+  useEffect(()=>{ if(tab==="crea"||tab==="sales"||tab==="answers") loadTags(); },[tab]);
+
+  // ▼3段ファネル（遅延取得：loadTags と同型。loading/doneガードで二重取得を防止。
+  //   失敗しても adFunnel=null のままカードは表示され、LINE追加行が「—」になるだけ）
+  async function loadAdFunnel(){
+    if(adFunnelState==="loading"||adFunnelState==="done") return;
+    setAdFunnelState("loading");
+    try{
+      const raw=await jsonpRetry(URL_ADFUNNEL + "&_=" + Date.now(), 2, 28000); // 再デプロイを確実に拾うキャッシュバスター
+      setAdFunnel((raw&&raw.adFunnel)||null); setAdFunnelState("done");
+      console.log("%c[OWNER'S] type=adfunnel : ✅ 実データ取得 成功","color:#16a34a;font-weight:bold");
+    }catch(e){
+      setAdFunnel(null); setAdFunnelState("error");
+      console.warn("[OWNER'S] adfunnel 取得失敗:", e.message);
+    }
+  }
+  useEffect(()=>{ if(tab==="crea") loadAdFunnel(); },[tab]);
+
+  useEffect(()=>{ load(); },[]);
+
+  if(loading || !summary){
+    return (
+      <div className="app">
+        <Sidebar tab={tab} setTab={setTab} summary={null} onReload={load} />
+        <div className="main"><div className="loadwrap"><div className="spin"></div>データを読み込み中…</div></div>
+      </div>
+    );
+  }
+
+  const pageTitle = (TABS.find(t=>t.id===tab)||{}).label;
+
+  return (
+    <div className="app">
+      <Sidebar tab={tab} setTab={setTab} summary={summary} onReload={load} />
+      <div className="main">
+        <div className="topbar">
+          <div className="page-title">{pageTitle}</div>
+          <div className="tb-right">
+            <SourceBadge source={source} />
+            <button className="reload" onClick={runUpdate} disabled={running}>
+              {running ? "更新中…（1〜3分かかります）" : "↻ 更新"}
+            </button>
+            <button className="bell" title="通知"><Icon name="bell" size={19} /><span className="dot"></span></button>
+            <div className="who">
+              <div className="av">RT</div>
+              <span className="ab-n">{summary.agency||"RIDEチーム"} ▾</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="content">
+          {runMsg? (
+            <div className="banner">
+              <span style={{display:"flex",alignItems:"center",gap:"8px"}}><Icon name="triangle-alert" size={18} />{runMsg}</span>
+              <button className="bx" onClick={()=>setRunMsg("")}>×</button>
+            </div>
+          ):null}
+          {warn && showWarn? (
+            <div className="banner">
+              <span style={{display:"flex",alignItems:"center",gap:"8px"}}><Icon name="triangle-alert" size={18} />{warn}</span>
+              <button className="bx" onClick={()=>setShowWarn(false)}>×</button>
+            </div>
+          ):null}
+          <div className="meta-line">
+            代理店：{summary.agency||"-"}　/　ファネル：{(summary.creatives||[]).length}件　/　生成：{(summary.generatedAt||"").slice(0,16).replace("T"," ")}
+          </div>
+
+          {tab==="dash"   && <Dashboard data={summary} />}
+          {tab==="crea"   && <Creatives data={summary} adFunnel={adFunnel} adQ={adQuery} setAdQ={setAdQuery} tagData={tagData} setTagData={setTagData} tagState={tagState} onTagRetry={loadTags} selTags={selTags} setSelTags={setSelTags} />}
+          {tab==="answers"&& <AnswersViewer answers={answers} summary={summary} state={answersState} onRetry={loadAnswers} adQ={adQuery} setAdQ={setAdQuery} tagData={tagData} setTagData={setTagData} tagState={tagState} onTagRetry={loadTags} selTags={selTags} setSelTags={setSelTags} />}
+          {tab==="testplan"&& <TestPlan />}
+          {tab==="sales"  && <SalesAnalysis sales={sales} summary={summary} adQ={adQuery} setAdQ={setAdQuery} tagData={tagData} setTagData={setTagData} tagState={tagState} onTagRetry={loadTags} selTags={selTags} setSelTags={setSelTags} />}
+          {tab==="hist"   && <History history={history} summary={summary} />}
+          {tab==="search" && <Search data={summary} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Sidebar({tab, setTab, summary, onReload}){
+  const lu = summary ? ((summary.lastUpdated||{}).daily || (summary.generatedAt||"").slice(0,16).replace("T"," ")) : "";
+  const agency = summary ? (summary.agency||"RIDEチーム") : "RIDEチーム";
+  return (
+    <div className="sidebar">
+      <div className="side-logo">
+        <b>OWNER'S</b>
+        <span>広告分析ツール</span>
+      </div>
+      <div className="side-nav">
+        {TABS.map(t=>(
+          <button key={t.id} className={"nav-item"+(tab===t.id?" active":"")} onClick={()=>setTab(t.id)}>
+            <span className="ni"><Icon name={t.icon} size={19} /></span>{t.label}
+          </button>
+        ))}
+      </div>
+      <div className="side-foot">
+        <div className="upd-box">
+          <div>
+            <div className="ub-k">データ更新</div>
+            <div className="ub-v">{lu||"—"}</div>
+          </div>
+          <button className="upd-btn" title="再取得" onClick={onReload}>↻</button>
+        </div>
+        <div className="agency-box">
+          <div className="av">{(agency||"R").slice(0,1)}</div>
+          <div>
+            <div className="ab-n">{agency}</div>
+            <div className="ab-s">代理店</div>
+          </div>
+        </div>
+        <div className="build-tag" title="デプロイ反映確認用のビルドタグ">{BUILD_TAG}</div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>

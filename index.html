@@ -29,7 +29,7 @@
   .main{flex:1;min-width:0;display:flex;flex-direction:column;}
 
   /* ロゴ（紫ブロック） */
-  .side-logo{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:20px 22px;} /* 青＝faviconと同色（渡辺=紫・二代目=緑と区別） */
+  .side-logo{background:linear-gradient(135deg,#2563eb,#1d4ed8);color:#fff;padding:20px 22px;} /* 青＝faviconと同色（他のダッシュボードと色で区別） */
   .side-logo b{display:block;font-size:21px;font-weight:800;letter-spacing:.6px;}
   .side-logo span{display:block;font-size:11.5px;color:rgba(255,255,255,.85);margin-top:3px;}
 
@@ -565,7 +565,7 @@ function Icon({name, size, sw, className, style}){
 /* ============================================================
    設定：唯一のデータ源（OWNER'S 広告分析 JSON API）
 ============================================================ */
-const API = "https://script.google.com/macros/s/AKfycbwvL-eH0ralsyEXEXTq_QGlANrxjjm0OROzUESnueXh7yrDOQhdr-CHlj2q6AKH3NJ1Bw/exec"; // RIDE三代目GASのデプロイURL（2026-10-02 初回デプロイ）
+const API = "https://script.google.com/macros/s/AKfycbwvL-eH0ralsyEXEXTq_QGlANrxjjm0OROzUESnueXh7yrDOQhdr-CHlj2q6AKH3NJ1Bw/exec"; // このダッシュボード用GASのデプロイURL（2026-10-02 初回デプロイ）
 const URL_SUMMARY = API + "?type=summary";
 const URL_HISTORY = API + "?type=history";
 const URL_RUN     = API + "?type=run"; // updateAll() を手動実行
@@ -2141,8 +2141,8 @@ function AnswersViewer({answers, summary, state, onRetry, adQ, setAdQ, tagData, 
 /* ▼顧客明細テーブル（GAS v33R: byCreative[].byStaff[].details）。
    ▼v34：表示先を「担当者別サマリー」から「クリエイティブ別カード内・担当者別の内訳」へ変更。
    StaffBreakdown の各担当者行（集計の下）に置き、「そのクリエイティブ×その担当者」の明細を表示する。
-   RIDE/渡辺共用：どちらのAPIでも details が来ていれば表示する汎用実装。
-   details が空/未定義なら何も出さない（既存表示のみ。渡辺版GAS未対応の間も安全）。
+   複数ダッシュボード共用：どのAPIでも details が来ていれば表示する汎用実装。
+   details が空/未定義なら何も出さない（既存表示のみ。API側が未対応の間も安全）。
    並び順はAPIのまま（GAS側で面談日程昇順ソート済み）。
    bg（H列背景色＝ステータス判定根拠）と src（WAC/代行屋）は画面に出さず、
    行の title 属性（ホバーで面談日程・bg・srcを表示）と data-* 属性（DevTools確認用）にのみ保持。 */
